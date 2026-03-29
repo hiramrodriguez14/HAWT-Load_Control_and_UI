@@ -39,7 +39,7 @@ static void spi_flush_rx(void *spi_inst){
 } 
 
 /**
- * @brief Performs a full-duplex SPI burst transfer
+ * @brief Performs a full-duplex SPI burst transfer, is the motor behing SPI communication
  *
  * Sends and receives multiple bytes over SPI while handling FIFO and timeout.
  *
@@ -164,7 +164,11 @@ ina229_status_t ina229_init(ina229_t *dev){
     // Formula:
     // SHUNT_CAL = 13107.2e6 * current_lsb * Rshunt
 
+    if(dev->adc_range == 1){ //If adc_range = 1 we must multiply the shunt calibration value by four, idk why I'm following datasheet orders
+    shunt_cal = 4*((uint16_t)(13107200.0f * dev->current_lsb * dev->r_shunt_ohms));
+    }else{
     shunt_cal = (uint16_t)(13107200.0f * dev->current_lsb * dev->r_shunt_ohms);
+    }
 
     //Write SHUNT_CAL
     status = ina229_write_shunt_calibration(dev, shunt_cal);
@@ -196,8 +200,12 @@ ina229_status_t ina229_read_reg16(ina229_t *dev, uint8_t reg, uint16_t *value){
         return INA229_ERR_ARG;
     }
 
-    tx[0] = (uint8_t)(((reg & 0x3F) << 2) | 0x01);
-    tx[1] = 0x00;
+    tx[0] = (uint8_t)(((reg & 0x3F) << 2) | 0x01); /*INA229 uses the 6 least significant bits for
+    addresing the registers, we first apply the 0x3F mask only to check if the register we are adressing
+    is in the existing range(0x3F is the last register), then we shift 2 positions left so the sixth 
+    bit becomes the most significant one then, we have reg[6:0] + 0(reserved to 0 always) 
+    + r/w bit(1 in this case for read)*/
+    tx[1] = 0x00; //cero every byte from now on
     tx[2] = 0x00;
 
     spi_flush_rx(dev->spi_inst);
@@ -235,9 +243,9 @@ ina229_status_t ina229_write_reg16(ina229_t *dev, uint8_t reg, uint16_t value){
         return INA229_ERR_ARG;
     }
 
-    tx[0] = (uint8_t)((reg & 0x3F) << 2); //write
-    tx[1] = (uint8_t)(value >> 8);
-    tx[2] = (uint8_t)(value & 0xFF);
+    tx[0] = (uint8_t)((reg & 0x3F) << 2); //write cmd [AAAAAA] + [0] + [0]
+    tx[1] = (uint8_t)(value >> 8); //Data MSB first
+    tx[2] = (uint8_t)(value & 0xFF); //Data LSB last
 
     spi_flush_rx(dev->spi_inst);
 
@@ -495,7 +503,6 @@ ina229_status_t ina229_read_current(ina229_t *dev, float *value){
  */
 ina229_status_t ina229_read_power(ina229_t *dev, float *value){
 
-    int32_t raw;
     uint32_t raw24;
     ina229_status_t status;
 
@@ -509,8 +516,7 @@ ina229_status_t ina229_read_power(ina229_t *dev, float *value){
         return status;
     }
 
-    raw = raw24 >> 4;
-    *value = (float)raw * (3.2f * dev->current_lsb);
+    *value = (float)raw24 * (3.2f * dev->current_lsb);
 
     return INA229_OK;
 }
