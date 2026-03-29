@@ -1,0 +1,22 @@
+[
+   {
+      "directory" : "/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI/Debug",
+      "command"   : "clang++ -D__MSPM0G3507__ -D__USE_SYSCONFIG__ -I\"/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI\" -I\"/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI/Debug\" -I\"/Users/hiramraul11gmail.com/ti/mspm0_sdk_2_10_00_04/source/third_party/CMSIS/Core/Include\" -I\"/Users/hiramraul11gmail.com/ti/mspm0_sdk_2_10_00_04/source\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/include/armv7em-ti-none-eabihf/c++/v1\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/include/c++/v1\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/lib/clang/18/include\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/include/c\" -xc",
+      "file"      : "/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI/main.c"
+   },
+   {
+      "directory" : "/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI/Debug",
+      "command"   : "clang++ -D__MSPM0G3507__ -D__USE_SYSCONFIG__ -I\"/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI\" -I\"/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI/Debug\" -I\"/Users/hiramraul11gmail.com/ti/mspm0_sdk_2_10_00_04/source/third_party/CMSIS/Core/Include\" -I\"/Users/hiramraul11gmail.com/ti/mspm0_sdk_2_10_00_04/source\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/include/armv7em-ti-none-eabihf/c++/v1\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/include/c++/v1\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/lib/clang/18/include\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/include/c\" -xc",
+      "file"      : "/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI/bsp/ina229_port.c"
+   },
+   {
+      "directory" : "/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI/Debug",
+      "command"   : "clang++ -D__MSPM0G3507__ -D__USE_SYSCONFIG__ -I\"/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI\" -I\"/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI/Debug\" -I\"/Users/hiramraul11gmail.com/ti/mspm0_sdk_2_10_00_04/source/third_party/CMSIS/Core/Include\" -I\"/Users/hiramraul11gmail.com/ti/mspm0_sdk_2_10_00_04/source\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/include/armv7em-ti-none-eabihf/c++/v1\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/include/c++/v1\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/lib/clang/18/include\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/include/c\" -xc",
+      "file"      : "/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI/Debug/ti_msp_dl_config.c"
+   },
+   {
+      "directory" : "/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI/Debug",
+      "command"   : "clang++ -D__MSPM0G3507__ -D__USE_SYSCONFIG__ -I\"/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI\" -I\"/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI/Debug\" -I\"/Users/hiramraul11gmail.com/ti/mspm0_sdk_2_10_00_04/source/third_party/CMSIS/Core/Include\" -I\"/Users/hiramraul11gmail.com/ti/mspm0_sdk_2_10_00_04/source\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/include/armv7em-ti-none-eabihf/c++/v1\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/include/c++/v1\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/lib/clang/18/include\" -isystem\"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/include/c\" -xc",
+      "file"      : "/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI/drivers/ina229/ina229.c"
+   }
+]
