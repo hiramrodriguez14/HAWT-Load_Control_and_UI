@@ -11,7 +11,6 @@ ORDERED_OBJS += \
 "./ti_msp_dl_config.o" \
 "./startup_mspm0g350x_ticlang.o" \
 "./main.o" \
-"./bsp/ina229_port.o" \
 "./drivers/ina229/ina229.o" \
 $(GEN_CMDS__FLAG) \
 -Wl,-ldevice.cmd.genlibs \
@@ -25,10 +24,8 @@ RMDIR := rm -rf
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include subdir_vars.mk
--include bsp/subdir_vars.mk
 -include drivers/ina229/subdir_vars.mk
 -include subdir_rules.mk
--include bsp/subdir_rules.mk
 -include drivers/ina229/subdir_rules.mk
 -include objects.mk
 
@@ -134,15 +131,15 @@ all: $(OBJS) $(GEN_CMDS)
 Load_Control_&_UI.out: $(OBJS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: Arm Linker'
-	"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/bin/tiarmclang" @"device.opt"  -march=thumbv6m -mcpu=cortex-m0plus -mfloat-abi=soft -mlittle-endian -mthumb -O2 -gdwarf-3 -Wall -Wl,-m"Load_Control_&_UI.map" -Wl,-i"/Users/hiramraul11gmail.com/ti/mspm0_sdk_2_10_00_04/source" -Wl,-i"/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI" -Wl,-i"/Users/hiramraul11gmail.com/workspace_ccstheia/Load_Control_&_UI/Debug/syscfg" -Wl,-i"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/lib" -Wl,--diag_wrap=off -Wl,--display_error_number -Wl,--warn_sections -Wl,--xml_link_info="Load_Control_&_UI_linkInfo.xml" -Wl,--rom_model -o "Load_Control_&_UI.out" $(ORDERED_OBJS)
+	"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/bin/tiarmclang" @"device.opt"  -march=thumbv6m -mcpu=cortex-m0plus -mfloat-abi=soft -mlittle-endian -mthumb -O2 -gdwarf-3 -Wall -Wl,-m"Load_Control_&_UI.map" -Wl,-i"/Users/hiramraul11gmail.com/ti/mspm0_sdk_2_10_00_04/source" -Wl,-i"/Users/hiramraul11gmail.com/workspace_ccstheia/load_ui_control" -Wl,-i"/Users/hiramraul11gmail.com/workspace_ccstheia/load_ui_control/Debug/syscfg" -Wl,-i"/Applications/ti/ccs2000/ccs/tools/compiler/ti-cgt-armllvm_4.0.4.LTS/lib" -Wl,--diag_wrap=off -Wl,--display_error_number -Wl,--warn_sections -Wl,--xml_link_info="Load_Control_&_UI_linkInfo.xml" -Wl,--rom_model -o "Load_Control_&_UI.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 
 # Other Targets
 clean:
 	-$(RM) $(GEN_MISC_FILES__QUOTED)$(GEN_FILES__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "ti_msp_dl_config.o" "startup_mspm0g350x_ticlang.o" "main.o" "bsp/ina229_port.o" "drivers/ina229/ina229.o" 
-	-$(RM) "ti_msp_dl_config.d" "startup_mspm0g350x_ticlang.d" "main.d" "bsp/ina229_port.d" "drivers/ina229/ina229.d" 
+	-$(RM) "ti_msp_dl_config.o" "startup_mspm0g350x_ticlang.o" "main.o" "drivers/ina229/ina229.o" 
+	-$(RM) "ti_msp_dl_config.d" "startup_mspm0g350x_ticlang.d" "main.d" "drivers/ina229/ina229.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 
