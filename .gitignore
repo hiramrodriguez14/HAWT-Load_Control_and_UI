@@ -1,0 +1,29 @@
+# ===== CCS =====
+Debug/
+Release/
+.settings/
+targetConfigs/
+.clangd
+
+# ===== Build files =====
+*.o
+*.obj
+*.out
+*.elf
+*.axf
+*.map
+*.bin
+*.hex
+
+# ===== Logs =====
+*.log
+
+# ===== Temp =====
+*.tmp
+*.swp
+
+# ===== macOS =====
+.DS_Store
+
+# ===== VS Code =====
+.vscode/
