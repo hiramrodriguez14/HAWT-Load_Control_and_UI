@@ -85,17 +85,17 @@ static ina229_status_t spi_transfer_burst(void *spi_inst, const uint8_t *tx, uin
 }
 
 /**
- * @brief Sign-extends a 24-bit value to 32-bit signed integer
+ * @brief Sign-extends a 20-bit value to 32-bit signed integer
  *
  * Used for converting raw ADC data from INA229 registers.
  *
- * @param x Raw 24-bit value
+ * @param x Raw 20-bit value
  *
  * @return Signed 32-bit integer
  */
-static inline int32_t ina229_sign_extend24(uint32_t x){
-    if (x & 0x800000UL){
-        x |= 0xFF000000UL;
+static inline int32_t ina229_sign_extend20(uint32_t x){
+    if (x & 0x80000UL) {      // bit 19
+        x |= 0xFFF00000UL;
     }
     return (int32_t)x;
 }
@@ -164,11 +164,13 @@ ina229_status_t ina229_init(ina229_t *dev){
     // Formula:
     // SHUNT_CAL = 13107.2e6 * current_lsb * Rshunt
 
-    if(dev->adc_range == 1){ //If adc_range = 1 we must multiply the shunt calibration value by four, idk why I'm following datasheet orders
-    shunt_cal = 4*((uint16_t)(13107200.0f * dev->current_lsb * dev->r_shunt_ohms));
-    }else{
-    shunt_cal = (uint16_t)(13107200.0f * dev->current_lsb * dev->r_shunt_ohms);
+    float cal = 13107200.0f * dev->current_lsb * dev->r_shunt_ohms;
+
+    if(dev->adc_range == 1){
+        cal *= 4.0f;
     }
+
+    shunt_cal = (uint16_t)(cal);
 
     //Write SHUNT_CAL
     status = ina229_write_shunt_calibration(dev, shunt_cal);
@@ -411,9 +413,9 @@ ina229_status_t ina229_read_shunt_voltage(ina229_t *dev, float *value){
         return status;
     }
 
-    raw_signed = ina229_sign_extend24(raw24);
-    raw_signed = raw_signed >> 4; //Bits [23:4] validos ya que los bits [3:0] no se usan like estan reservados y leen 0
-
+    raw24 >>= 4; //Bits [23:4] validos ya que los bits [3:0] no se usan like estan reservados y leen 0
+    raw_signed = ina229_sign_extend20(raw24);
+    
     if(dev->adc_range){
         lsb = 78.125e-9f;
     } else {
@@ -488,8 +490,9 @@ ina229_status_t ina229_read_current(ina229_t *dev, float *value){
         return status;
     }
 
-    raw_signed = ina229_sign_extend24(raw24);
-    raw_signed = raw_signed >> 4;
+
+    raw24 >>= 4;
+    raw_signed = ina229_sign_extend20(raw24);
 
     *value = (float)raw_signed * dev->current_lsb;
 
