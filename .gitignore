@@ -3,7 +3,7 @@ Debug/
 Release/
 .settings/
 targetConfigs/
-
+notes.txt
 # ===== Clang / tooling =====
 .clangd
 
