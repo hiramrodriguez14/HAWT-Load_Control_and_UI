@@ -1,11 +1,13 @@
-# ===== CCS =====
+# ===== CCS (Code Composer Studio) =====
 Debug/
 Release/
 .settings/
 targetConfigs/
+
+# ===== Clang / tooling =====
 .clangd
 
-# ===== Build files =====
+# ===== Build artifacts =====
 *.o
 *.obj
 *.out
@@ -18,12 +20,9 @@ targetConfigs/
 # ===== Logs =====
 *.log
 
-# ===== Temp =====
+# ===== Temporary =====
 *.tmp
 *.swp
 
 # ===== macOS =====
 .DS_Store
-
-# ===== VS Code =====
-.vscode/
