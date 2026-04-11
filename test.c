@@ -13,7 +13,7 @@ ina229_t ina = {
     .cs_port = (uint32_t)GPIOA,
     .cs_pin = DL_GPIO_PIN_8,
     .r_shunt_ohms = 0.3f,
-    .current_lsb = 1.97e-6f,
+    .current_lsb = 0.9536e-6f,
     .adc_range = 1
 };
 

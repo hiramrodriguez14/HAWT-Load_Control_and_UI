@@ -126,55 +126,36 @@ static inline int64_t ina229_sign_extend40(uint64_t x){
  *
  * @return Status of initialization
  */
-ina229_status_t ina229_init(ina229_t *dev){
-
+ina229_status_t ina229_init(ina229_t *dev)
+{
     uint16_t config;
     uint16_t shunt_cal;
     ina229_status_t status;
 
-    if(dev == 0){
-        return INA229_ERR_ARG;
-    }
+    if (dev == NULL) return INA229_ERR_ARG;
+    if (dev->spi_inst == NULL) return INA229_ERR_ARG;
+    if (dev->r_shunt_ohms <= 0.0f) return INA229_ERR_ARG;
+    if (dev->current_lsb <= 0.0f) return INA229_ERR_ARG;
 
-    if(dev->spi_inst == 0){
-        return INA229_ERR_ARG;
-    }
-
-    if(dev->r_shunt_ohms <= 0.0f){
-        return INA229_ERR_ARG;
-    }
-
-    if(dev->current_lsb <= 0.0f){
-        return INA229_ERR_ARG;
-    }
-
-    // CS in idle
     ina229_cs_high(dev);
 
-    //Read CONFIG
     status = ina229_read_configuration(dev, &config);
-    if(status != INA229_OK){
+    if (status != INA229_OK) {
         return status;
     }
 
-    //Store ADCRANGE
     dev->adc_range = (config >> 4) & 0x01;
 
-    // Calculate SHUNT_CAL
-    // Formula:
-    // SHUNT_CAL = 13107.2e6 * current_lsb * Rshunt
+    double cal = 13107200000.0 * (double)dev->current_lsb * (double)dev->r_shunt_ohms;
 
-    float cal = 13107200.0f * dev->current_lsb * dev->r_shunt_ohms;
-
-    if(dev->adc_range == 1){
-        cal *= 4.0f;
+    if (dev->adc_range == 1) {
+        cal *= 4.0;
     }
 
-    shunt_cal = (uint16_t)(cal);
+    shunt_cal = (uint16_t)(cal + 0.5);
 
-    //Write SHUNT_CAL
     status = ina229_write_shunt_calibration(dev, shunt_cal);
-    if(status != INA229_OK){
+    if (status != INA229_OK) {
         return status;
     }
 

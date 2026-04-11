@@ -12,9 +12,15 @@
 const GPIO   = scripting.addModule("/ti/driverlib/GPIO", {}, false);
 const GPIO1  = GPIO.addInstance();
 const GPIO2  = GPIO.addInstance();
+const GPIO3  = GPIO.addInstance();
+const PWM    = scripting.addModule("/ti/driverlib/PWM", {}, false);
+const PWM1   = PWM.addInstance();
 const SPI    = scripting.addModule("/ti/driverlib/SPI", {}, false);
 const SPI1   = SPI.addInstance();
 const SYSCTL = scripting.addModule("/ti/driverlib/SYSCTL");
+const TIMER  = scripting.addModule("/ti/driverlib/TIMER", {}, false);
+const TIMER1 = TIMER.addInstance();
+const TIMER2 = TIMER.addInstance();
 const UART   = scripting.addModule("/ti/driverlib/UART", {}, false);
 const UART1  = UART.addInstance();
 
@@ -36,6 +42,21 @@ GPIO2.associatedPins[0].direction        = "INPUT";
 GPIO2.associatedPins[0].interruptEn      = true;
 GPIO2.associatedPins[0].polarity         = "FALL";
 GPIO2.associatedPins[0].internalResistor = "PULL_UP";
+
+GPIO3.$name                               = "GPIO_GRP_0";
+GPIO3.associatedPins[0].$name             = "PIN_0";
+GPIO3.associatedPins[0].launchPadShortcut = "Button3En";
+GPIO3.associatedPins[0].interruptEn       = true;
+GPIO3.associatedPins[0].polarity          = "RISE";
+GPIO3.associatedPins[0].internalResistor  = "PULL_DOWN";
+
+PWM1.$name                      = "PWM_0";
+PWM1.timerCount                 = 320;
+PWM1.ccIndex                    = [0];
+PWM1.PWM_CHANNEL_0.$name        = "ti_driverlib_pwm_PWMTimerCC0";
+PWM1.PWM_CHANNEL_0.dutyCycle    = 30;
+PWM1.ccp0PinConfig.$name        = "ti_driverlib_gpio_GPIOPinGeneric5";
+PWM1.peripheral.ccp0Pin.$assign = "PA12";
 
 SPI1.$name                      = "SPI_0";
 SPI1.enableDMAEvent1            = false;
@@ -59,6 +80,22 @@ SPI1.peripheral.misoPin.$assign = "PB19";
 SYSCTL.forceDefaultClkConfig = true;
 SYSCTL.MFCLKEn               = true;
 
+TIMER1.$name              = "TIMER_0";
+TIMER1.timerClkSrc        = "LFCLK";
+TIMER1.timerMode          = "PERIODIC_UP";
+TIMER1.timerStartTimer    = true;
+TIMER1.interrupts         = ["OVERFLOW"];
+TIMER1.timerPeriod        = "10 ms";
+TIMER1.peripheral.$assign = "TIMA0";
+
+TIMER2.$name              = "TIMER_1";
+TIMER2.timerClkSrc        = "LFCLK";
+TIMER2.timerMode          = "PERIODIC_UP";
+TIMER2.timerStartTimer    = true;
+TIMER2.interrupts         = ["OVERFLOW"];
+TIMER2.timerPeriod        = "2 s";
+TIMER2.peripheral.$assign = "TIMA1";
+
 UART1.$name                    = "UART_0";
 UART1.profile                  = "CONFIG_PROFILE_2";
 UART1.peripheral.$assign       = "UART0";
@@ -77,4 +114,6 @@ Board.peripheral.$suggestSolution            = "DEBUGSS";
 Board.peripheral.swclkPin.$suggestSolution   = "PA20";
 Board.peripheral.swdioPin.$suggestSolution   = "PA19";
 GPIO2.associatedPins[0].pin.$suggestSolution = "PB13";
+GPIO3.associatedPins[0].pin.$suggestSolution = "PB21";
+PWM1.peripheral.$suggestSolution             = "TIMG0";
 SYSCTL.peripheral.$suggestSolution           = "SYSCTL";
