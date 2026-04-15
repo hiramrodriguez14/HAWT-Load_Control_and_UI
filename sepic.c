@@ -4,16 +4,29 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
+#define UNHANDLED_INTERRUPT()                                                  \
+  do {                                                                         \
+    __disable_irq();                                                           \
+    __BKPT(0);                                                                 \
+    while (1) {                                                                \
+    }                                                                          \
+  } while (0)
 #define DELAY (320000)
 
+//Battery State
+typedef enum {
+    ABSORPTION,
+    FLOAT,
+    BULK
+} battery_state;
 // ================= INA CONFIG =================
 ina229_t ina = {
     .spi_inst = SPI_0_INST,
     .cs_port = (uint32_t)GPIOA,
     .cs_pin = DL_GPIO_PIN_8,
-    .r_shunt_ohms = 0.3f,
-    .current_lsb = 19.1e-6f,
-    .adc_range = 1
+    .r_shunt_ohms = 0.05f, //Shunt resistance, in our case 50mohms
+    .current_lsb = 6.25e-6f,//Expected current / 2^19
+    .adc_range = 0 //163.5mV 
 };
 // ================= VARIABLES =================
 uint16_t man_id = 0;
@@ -27,8 +40,11 @@ float power = 0.0f;
 float energy = 0.0f;
 float charge = 0.0f;
 
+float Vref;
+const float Imax = 0.4; 
+
 uint16_t diagnostics = 0;
-uint8_t flags = 0;
+volatile uint8_t flags = 0;
 int16_t shunt_underVoltage = (int16_t)0x8000;
 int16_t shunt_overVoltage  = 0x7FFF;
 int16_t bus_underVoltage   = 0;
@@ -36,22 +52,21 @@ int16_t bus_overVoltage    = 0x7FFF;
 int16_t temperature_limit  = 4000;
 int16_t power_limit        = 0x7FFF;
 
-float Vref = 6.8f;
-float Kp = 0.02f;
-float Ki = 0.0f;
-float Ts = 0.01f; //10ms
 
-float integral = 0.55f;
-float duty = 0.30f; //duty inicial
+volatile float duty = 0.30f; //duty inicial
 
-float duty_min = 0.05;
-float duty_max = 0.9f;
+const float duty_min = 0.05;
+const float duty_max = 0.80f;
 
-float vbat_f = 0.0f; //filtered battery voltage
-float alpha = 0.1f; //simple low-pass filter
+volatile float vbat_f = 0.0f; //filtered battery voltage
+const float alpha = 0.1f; //simple low-pass filter
 
-uint8_t time_is_up = 0;
-uint8_t time_to_uart = 0;
+volatile uint8_t time_is_up = 0;
+volatile uint8_t time_to_uart = 0;
+
+volatile static uint8_t vbat_filter_initialized = 0;
+
+battery_state state = BULK;
 // ================= UART =================
 void uart_send_char(char c) {
     while (DL_UART_Main_isBusy(UART_0_INST)) {
@@ -85,48 +100,50 @@ void uart_printf(const char *fmt, ...) {
     }
 }
 // ================= INTERRUPTS =================
-void GROUP1_IRQHandler(void) {
-    uint32_t status = DL_GPIO_getEnabledInterruptStatus(GPIOB, ALERT_INA229_ALERT_PIN);
 
-    if (status & ALERT_INA229_ALERT_PIN) {
+void GROUP1_IRQHandler(void) {
+    uint32_t pendingB = DL_GPIO_getPendingInterrupt(GPIOB);
+
+    if (pendingB == ALERT_INA229_ALERT_IIDX) {
         DL_GPIO_clearInterruptStatus(GPIOB, ALERT_INA229_ALERT_PIN);
         flags = 1;
-        uart_printf("ISR: ALERT interrupt detected\r\n");
-    }
-
-    status = DL_GPIO_getEnabledInterruptStatus(GPIOB, GPIO_GRP_0_PIN_0_PIN );
-    if(status &  GPIO_GRP_0_PIN_0_PIN ){
-        delay_cycles(DELAY);
-        DL_GPIO_clearInterruptStatus(GPIOB, GPIO_GRP_0_PIN_0_PIN);
-        Kp += 0.1;
     }
 }
 
-void TIMA0_IRQHandler(void) {
-    uint32_t flags = DL_TimerA_getPendingInterrupt(TIMA0);
-
-    if (flags & DL_TIMERA_INTERRUPT_OVERFLOW_EVENT) {
-        DL_TimerA_clearInterruptStatus(TIMA0, DL_TIMERA_INTERRUPT_OVERFLOW_EVENT);
-
-        time_is_up = 1;
-    }
+void  UART_TIMER_INST_IRQHandler(void) {
+  switch (DL_Timer_getPendingInterrupt(UART_TIMER_INST)) {
+  case DL_TIMER_IIDX_ZERO:
+    time_to_uart = 1;
+    break;
+  default:
+    UNHANDLED_INTERRUPT();
+    break;
+  }
 }
-void TIMA1_IRQHandler(void) {
-    uint32_t flags = DL_TimerA_getPendingInterrupt(TIMA1);
-
-    if (flags & DL_TIMERA_INTERRUPT_OVERFLOW_EVENT) {
-        DL_TimerA_clearInterruptStatus(TIMA1, DL_TIMERA_INTERRUPT_OVERFLOW_EVENT);
-
-        time_to_uart = 1;
-    }
+void GATE_DRIVING_TIMER_INST_IRQHandler(void) {
+  switch (DL_Timer_getPendingInterrupt(GATE_DRIVING_TIMER_INST)) {
+  case DL_TIMER_IIDX_ZERO:
+    time_is_up = 1;
+    break;
+  default:
+    UNHANDLED_INTERRUPT();
+    break;
+  }
 }
 // ================= MAIN =================
 int main(void)
 {
     SYSCFG_DL_init();
     NVIC_EnableIRQ(GPIOB_INT_IRQn);  
-    //DL_Timer_setCaptureCompareValue(TIMA0, 10000, DL_TIMERA_CAPTURE_COMPARE_0_INDEX);   //Periodic 300ms interrupt
-
+    NVIC_EnableIRQ(UART_TIMER_INST_INT_IRQN);
+    NVIC_EnableIRQ(GATE_DRIVING_TIMER_INST_INT_IRQN);
+    NVIC_EnableIRQ(KP_BUTTON_INT_IRQN); 
+    NVIC_EnableIRQ(ALERT_INT_IRQN); 
+ 
+    DL_Timer_startCounter(UART_TIMER_INST);
+    DL_Timer_startCounter(PWM_0_INST);
+    DL_Timer_startCounter(GATE_DRIVING_TIMER_INST);
+ 
     //Configure registers
     if(ina229_write_configuration(&ina, 0xBFF0) != INA229_OK){
         uart_printf("INA229 config register failed\r\n");
@@ -239,44 +256,74 @@ while(1){
                 current,
                 power
             );
-        uart_printf("Kp=%.2f , Ki=%.2f, Integral=%.2f, duty=%.2f",Kp,Ki,integral,duty);
+        uart_printf("Vref=%.2f vbat_f=%.3f duty=%.3f state=%d\r\n", Vref, vbat_f, duty, state);
+        time_to_uart = 0;
     }
 
     //SEPIC 
     if(time_is_up){
-        //Regulate voltage to 6.8V, this will be the float step
-        float vbat;
-        float error;
-        float output;
-
-        vbat = bus_voltage;
-
-        vbat_f = vbat_f + alpha * (vbat - vbat_f);
-
-        error = Vref - vbat_f;
-
-        integral = integral + (Ki * error * Ts);
-
-        if(integral > duty_max) integral = duty_max;
-        if(integral < duty_min) integral = duty_min;
-
-        output = (Kp * error) + integral;
-
-        if(output > duty_max) output = duty_max;
-        if(output < duty_min) output = duty_min;
-
-        duty = output;
-
-        uint32_t pwm_period = 320; 
-        uint32_t cmp;
-
-        cmp = (uint32_t)(duty * (pwm_period + 1));
-
-        if (cmp > pwm_period) cmp = pwm_period;
-
-        DL_Timer_setCaptureCompareValue(PWM_0_INST, cmp, GPIO_PWM_0_C0_IDX);
-        time_is_up = 0;
+    if(!(ina229_read_bus_voltage(&ina, &bus_voltage) == INA229_OK)){
+        uart_printf("Read error\r\n");
     }
+    if(!(ina229_read_current(&ina, &current) == INA229_OK)){
+        uart_printf("Read error\r\n");
+    }
+
+    if (!vbat_filter_initialized) {
+        vbat_f = bus_voltage;
+        vbat_filter_initialized = 1;
+    } else {
+        vbat_f = vbat_f + alpha * (bus_voltage - vbat_f);
+    }
+
+    float step = 0.002f;
+    float deadband = 0.05f;
+
+    if(state == ABSORPTION || state == FLOAT){
+
+    if(state == ABSORPTION){
+        Vref = 7.3;
+    }else{
+        Vref = 6.8;
+    }
+
+    if (vbat_f < (Vref - deadband)) {
+        duty += step;
+    }
+    else if (vbat_f > (Vref + deadband)) {
+        duty -= step;
+    }
+
+    if (duty > duty_max) duty = duty_max;
+    if (duty < duty_min) duty = duty_min;
+
+    uint32_t pwm_period = 319;
+    uint32_t cmp = (uint32_t)(duty * (pwm_period + 1));
+
+    if (cmp > pwm_period) cmp = pwm_period;
+
+    DL_Timer_setCaptureCompareValue(PWM_0_INST, cmp, GPIO_PWM_0_C0_IDX);
+
+    time_is_up = 0;
+    } else { //BULK
+    if (current > Imax) {
+        duty-=step;
+    } else {
+        duty+=step;
+    }
+    if (duty > duty_max) duty = duty_max;
+    if (duty < duty_min) duty = duty_min;
+
+    uint32_t pwm_period = 319;
+    uint32_t cmp = (uint32_t)(duty * (pwm_period + 1));
+
+    if (cmp > pwm_period) cmp = pwm_period;
+
+    DL_Timer_setCaptureCompareValue(PWM_0_INST, cmp, GPIO_PWM_0_C0_IDX);
+
+    time_is_up = 0;
+    }
+}
     __WFI(); //Enter LPM and wait for interrupts
 }
 }

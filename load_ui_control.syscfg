@@ -43,16 +43,17 @@ GPIO2.associatedPins[0].interruptEn      = true;
 GPIO2.associatedPins[0].polarity         = "FALL";
 GPIO2.associatedPins[0].internalResistor = "PULL_UP";
 
-GPIO3.$name                               = "GPIO_GRP_0";
+GPIO3.$name                               = "KP_BUTTON";
 GPIO3.associatedPins[0].$name             = "PIN_0";
-GPIO3.associatedPins[0].launchPadShortcut = "Button3En";
+GPIO3.associatedPins[0].launchPadShortcut = "Button2En";
+GPIO3.associatedPins[0].internalResistor  = "PULL_DOWN";
 GPIO3.associatedPins[0].interruptEn       = true;
 GPIO3.associatedPins[0].polarity          = "RISE";
-GPIO3.associatedPins[0].internalResistor  = "PULL_DOWN";
 
 PWM1.$name                      = "PWM_0";
 PWM1.timerCount                 = 320;
 PWM1.ccIndex                    = [0];
+PWM1.pwmMode                    = "EDGE_ALIGN_UP";
 PWM1.PWM_CHANNEL_0.$name        = "ti_driverlib_pwm_PWMTimerCC0";
 PWM1.PWM_CHANNEL_0.dutyCycle    = 30;
 PWM1.ccp0PinConfig.$name        = "ti_driverlib_gpio_GPIOPinGeneric5";
@@ -80,20 +81,20 @@ SPI1.peripheral.misoPin.$assign = "PB19";
 SYSCTL.forceDefaultClkConfig = true;
 SYSCTL.MFCLKEn               = true;
 
-TIMER1.$name              = "TIMER_0";
 TIMER1.timerClkSrc        = "LFCLK";
 TIMER1.timerMode          = "PERIODIC_UP";
 TIMER1.timerStartTimer    = true;
-TIMER1.interrupts         = ["OVERFLOW"];
 TIMER1.timerPeriod        = "10 ms";
+TIMER1.$name              = "GATE_DRIVING_TIMER";
+TIMER1.interrupts         = ["ZERO"];
 TIMER1.peripheral.$assign = "TIMA0";
 
-TIMER2.$name              = "TIMER_1";
 TIMER2.timerClkSrc        = "LFCLK";
 TIMER2.timerMode          = "PERIODIC_UP";
 TIMER2.timerStartTimer    = true;
-TIMER2.interrupts         = ["OVERFLOW"];
 TIMER2.timerPeriod        = "2 s";
+TIMER2.$name              = "UART_TIMER";
+TIMER2.interrupts         = ["ZERO"];
 TIMER2.peripheral.$assign = "TIMA1";
 
 UART1.$name                    = "UART_0";
@@ -114,6 +115,6 @@ Board.peripheral.$suggestSolution            = "DEBUGSS";
 Board.peripheral.swclkPin.$suggestSolution   = "PA20";
 Board.peripheral.swdioPin.$suggestSolution   = "PA19";
 GPIO2.associatedPins[0].pin.$suggestSolution = "PB13";
-GPIO3.associatedPins[0].pin.$suggestSolution = "PB21";
+GPIO3.associatedPins[0].pin.$suggestSolution = "PA18";
 PWM1.peripheral.$suggestSolution             = "TIMG0";
 SYSCTL.peripheral.$suggestSolution           = "SYSCTL";
