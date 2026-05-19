@@ -2,7 +2,7 @@
 #include "ina229.h"
 
 #define INA229_SPI_TIMEOUT 1000000UL
-
+//Author: Hiram R. Rodriguez Hernandez
 /**
  * @brief Pulls the chip select (CS) line low to start an SPI transaction
  *
