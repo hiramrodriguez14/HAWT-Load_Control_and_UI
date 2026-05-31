@@ -2,6 +2,7 @@
 
 #include "battery_charger.h"
 #include "converter.h"
+#include "dump_load.h"
 #include "load_relay.h"
 #include "load_supervisor.h"
 #include "mppt.h"
@@ -286,8 +287,8 @@ static void draw_lcd(void)
             lcd_print_string_limited(mppt_state_to_string(mppt_get_state()));
             lcd_print_string_limited(" A:");
             lcd_print_u32(load_supervisor_is_mppt_allowed());
-            lcd_print_string_limited(" D");
-            lcd_print_fixed(converter_get_duty(CONVERTER_CHANNEL_MPPT), 3U);
+            lcd_print_string_limited(" Dump:");
+            lcd_print_string_limited(dump_load_state_to_string(dump_load_get_state()));
             lcd_finish_line();
             break;
 
@@ -375,7 +376,7 @@ void ui_update(void)
     const telemetry_snapshot_t *telemetry = telemetry_get_snapshot();
 
     uart_printf(
-        "State=%s | Run=%u | Rec=%u | BatMode=%s | Vbat=%.3f | Ibat=%.6f | BatPot=%u | BatDuty=%.3f | MpptMode=%s | MpptDuty=%.3f | MpptAllowed=%u | PMargin=%.3f | LoadRelay=%s | Vrect=%.3f | Irect=%.3f | Wind=%.3f | RPM=%.3f | TState=%u | TCrit=%u\r\n",
+        "State=%s | Run=%u | Rec=%u | BatMode=%s | Vbat=%.3f | Ibat=%.6f | BatPot=%u | BatDuty=%.3f | MpptMode=%s | MpptDuty=%.3f | MpptAllowed=%u | PMargin=%.3f | LoadRelay=%s | DumpLoad=%s | Vrect=%.3f | Irect=%.3f | Wind=%.3f | RPM=%.3f | TState=%u | TCrit=%u\r\n",
         battery_charger_state_to_string(battery_charger_get_state()),
         system_running,
         record_enabled,
@@ -389,6 +390,7 @@ void ui_update(void)
         load_supervisor_is_mppt_allowed(),
         load_supervisor_get_power_margin_w(),
         load_relay_state_to_string(load_relay_get_state()),
+        dump_load_state_to_string(dump_load_get_state()),
         telemetry->rectifier.bus_voltage,
         telemetry->rectifier.current,
         telemetry->turbine_wind_speed_m_s,

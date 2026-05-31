@@ -3,6 +3,7 @@
 #include "ti_msp_dl_config.h"
 #include "App/battery_charger.h"
 #include "App/converter.h"
+#include "App/dump_load.h"
 #include "App/load_supervisor.h"
 #include "App/load_relay.h"
 #include "App/mppt.h"
@@ -62,6 +63,7 @@ void app_init(void)
 
     turbine_uart_init();
     load_relay_init();
+    dump_load_init();
     converter_init();
     battery_charger_init();
     mppt_init();
