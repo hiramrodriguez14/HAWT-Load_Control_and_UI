@@ -8,6 +8,8 @@
 #include <stdbool.h>
 
 //These values are constant for a 6V 1.3Ah SLA Battery
+#define BATTERY_CONVERTER 0x00 //0x00 means hand made converter, and 0x01 means POT converter
+#define MPPT_CONVERTER 0x001 //same as explained above
 #define BULK_CURRENT_A          0.20f
 #define MAX_CURRENT_A           0.40f
 
@@ -65,7 +67,6 @@ ina229_t ina_rect = {
     .adc_range = 0
 };
 
-uint8_t select_converter = 0;
 
 uint16_t bat_man_id = 0;
 uint16_t bat_dev_id = 0;
@@ -241,7 +242,7 @@ void converter_disable(void)
     duty = 0.0f;
     update_pwm_from_value(0.0f);
 
-    if (select_converter == 1) {
+    if (BATTERY_CONVERTER) {
         if (last_pot_code != SAFE_OFF_POT_CODE) {
             if (!MCP45HV51_setWiperRaw(SAFE_OFF_POT_CODE)) {
                 uart_printf("MCP45HV51 safe-off write failed\r\n");
@@ -258,7 +259,7 @@ void apply_converter_output(void)
         return;
     }
 
-    if (select_converter == 0) {
+    if (!BATTERY_CONVERTER) {
         update_pwm_from_value(duty);
     }
     else {
@@ -324,23 +325,6 @@ void charger_control_update(float vbat, float ibat)
      */
     float step = DUTY_STEP;
 
-    if(DL_GPIO_readPins(SELECT_CONVERTER_PORT,SELECT_CONVERTER_PIN_0_PIN)){
-        select_converter = 1;
-    } else {
-        select_converter = 0;
-    }
-
-    if (select_converter == 1) {
-        DL_GPIO_setPins(
-            LED_BLUE_PORT,
-            LED_BLUE_PIN_3_PIN
-        );
-    } else{
-        DL_GPIO_clearPins(
-            LED_BLUE_PORT,
-            LED_BLUE_PIN_3_PIN
-        );
-    }
 
     switch (state)
     {
@@ -348,7 +332,7 @@ void charger_control_update(float vbat, float ibat)
             Vref = ABS_VOLTAGE_V;
 
             if (ibat < (BULK_CURRENT_A)) {
-                if(select_converter){
+                if(BATTERY_CONVERTER){
                     if(control_divider>=MCP45HV51_WAIT_TIME){
                     pot = MCP45HV51_decrementWiper();
                     if (pot) last_pot_code--;
@@ -361,7 +345,7 @@ void charger_control_update(float vbat, float ibat)
                 }
             }
             else if (ibat > (BULK_CURRENT_A + CURRENT_DEADBAND_A)) {
-                if(select_converter){
+                if(BATTERY_CONVERTER){
                     if(control_divider>=MCP45HV51_WAIT_TIME){
                     pot = MCP45HV51_incrementWiper();
                     if (pot) last_pot_code++;
@@ -379,7 +363,7 @@ void charger_control_update(float vbat, float ibat)
             Vref = ABS_VOLTAGE_V;
 
             if (vbat < (Vref - VOLTAGE_DEADBAND)) {
-              if(select_converter){
+              if(BATTERY_CONVERTER){
                 if(control_divider>=MCP45HV51_WAIT_TIME){
                     pot = MCP45HV51_decrementWiper();
                     if (pot) last_pot_code--;
@@ -392,7 +376,7 @@ void charger_control_update(float vbat, float ibat)
                 }
             }
             else if (vbat > (Vref + VOLTAGE_DEADBAND)) {
-                if(select_converter){
+                if(BATTERY_CONVERTER){
                     if(control_divider>=MCP45HV51_WAIT_TIME){
                     pot = MCP45HV51_incrementWiper();
                     if (pot) last_pot_code++;
@@ -410,7 +394,7 @@ void charger_control_update(float vbat, float ibat)
             Vref = FLOAT_VOLTAGE_V;
 
             if (vbat < (Vref - VOLTAGE_DEADBAND)) {
-              if(select_converter){
+              if(BATTERY_CONVERTER){
                 if(control_divider >= MCP45HV51_WAIT_TIME){
                     pot = MCP45HV51_decrementWiper();
                     if (pot) last_pot_code--;
@@ -423,7 +407,7 @@ void charger_control_update(float vbat, float ibat)
                 }
             }
             else if (vbat > (Vref + VOLTAGE_DEADBAND)) {
-                 if(select_converter){
+                 if(BATTERY_CONVERTER){
                     if(control_divider >= MCP45HV51_WAIT_TIME){
                     pot = MCP45HV51_incrementWiper();
                      if (pot) last_pot_code++;

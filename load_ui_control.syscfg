@@ -150,9 +150,9 @@ SYSCTL.MFCLKEn               = true;
 TIMER1.timerClkSrc        = "LFCLK";
 TIMER1.timerMode          = "PERIODIC_UP";
 TIMER1.timerStartTimer    = true;
-TIMER1.$name              = "GATE_DRIVING_TIMER";
 TIMER1.interrupts         = ["ZERO"];
 TIMER1.timerPeriod        = "50 ms";
+TIMER1.$name              = "CONVERTERS_TIMER";
 TIMER1.peripheral.$assign = "TIMA0";
 
 TIMER2.timerClkSrc        = "LFCLK";
