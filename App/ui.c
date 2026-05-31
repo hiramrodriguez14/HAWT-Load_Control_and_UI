@@ -29,27 +29,6 @@ static uint8_t current_page;
 static uint8_t system_running;
 static uint8_t record_enabled;
 static uint8_t lcd_dirty;
-#if defined(UI_BUTTON_PORT)
-static uint8_t next_waiting_release;
-static uint8_t prev_waiting_release;
-static uint8_t start_stop_waiting_release;
-static uint8_t record_waiting_release;
-
-static void handle_spst_button(GPIO_Regs *port,
-                               uint32_t pin,
-                               volatile uint8_t *event,
-                               uint8_t *waiting_release)
-{
-    uint8_t pressed = (DL_GPIO_readPins(port, pin) & pin) ? 0U : 1U;
-
-    if ((*waiting_release == 0U) && pressed) {
-        *event = 1U;
-        *waiting_release = 1U;
-    } else if ((*waiting_release != 0U) && !pressed) {
-        *waiting_release = 0U;
-    }
-}
-#endif
 
 #if defined(LCD_RS_PORT)
 static uint8_t lcd_col;
@@ -456,10 +435,7 @@ void ui_handle_gpio_interrupt(uint32_t gpioa_pending, uint32_t gpiob_pending)
     if (((UI_BUTTON_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_NEXT_PIN)) ||
         ((UI_BUTTON_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_NEXT_PIN))) {
         DL_GPIO_clearInterruptStatus(UI_BUTTON_PORT, UI_BUTTON_NEXT_PIN);
-        handle_spst_button(UI_BUTTON_PORT,
-                           UI_BUTTON_NEXT_PIN,
-                           &next_page_event,
-                           &next_waiting_release);
+        next_page_event = 1U;
     }
 #endif
 
@@ -467,10 +443,7 @@ void ui_handle_gpio_interrupt(uint32_t gpioa_pending, uint32_t gpiob_pending)
     if (((UI_BUTTON_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_PREV_PIN)) ||
         ((UI_BUTTON_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_PREV_PIN))) {
         DL_GPIO_clearInterruptStatus(UI_BUTTON_PORT, UI_BUTTON_PREV_PIN);
-        handle_spst_button(UI_BUTTON_PORT,
-                           UI_BUTTON_PREV_PIN,
-                           &prev_page_event,
-                           &prev_waiting_release);
+        prev_page_event = 1U;
     }
 #endif
 
@@ -478,10 +451,7 @@ void ui_handle_gpio_interrupt(uint32_t gpioa_pending, uint32_t gpiob_pending)
     if (((UI_BUTTON_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_START_STOP_PIN)) ||
         ((UI_BUTTON_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_START_STOP_PIN))) {
         DL_GPIO_clearInterruptStatus(UI_BUTTON_PORT, UI_BUTTON_START_STOP_PIN);
-        handle_spst_button(UI_BUTTON_PORT,
-                           UI_BUTTON_START_STOP_PIN,
-                           &start_stop_event,
-                           &start_stop_waiting_release);
+        start_stop_event = 1U;
     }
 #endif
 
@@ -489,10 +459,7 @@ void ui_handle_gpio_interrupt(uint32_t gpioa_pending, uint32_t gpiob_pending)
     if (((UI_BUTTON_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_RECORD_PIN)) ||
         ((UI_BUTTON_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_RECORD_PIN))) {
         DL_GPIO_clearInterruptStatus(UI_BUTTON_PORT, UI_BUTTON_RECORD_PIN);
-        handle_spst_button(UI_BUTTON_PORT,
-                           UI_BUTTON_RECORD_PIN,
-                           &record_event,
-                           &record_waiting_release);
+        record_event = 1U;
     }
 #endif
 }
