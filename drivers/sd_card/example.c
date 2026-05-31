@@ -18,7 +18,6 @@ volatile FRESULT g_closeResult = FR_OK;
 volatile UINT    g_bytesWritten = 0;
 
 
-/*
 g_fsStatus:
 0      = start
 1      = mount ok

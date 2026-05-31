@@ -87,7 +87,7 @@ GPIO6.associatedPins[0].driveStrength = "HIGH";
 GPIO6.associatedPins[0].ioStructure   = "HD";
 GPIO6.associatedPins[0].$name         = "IN1";
 
-GPIO7.$name                   = "DUMP_LOAD_REALY";
+GPIO7.$name                   = "DUMP_LOAD_RELAY";
 GPIO7.associatedPins[0].$name = "IN2";
 
 GPIO8.$name                   = "LCD";
