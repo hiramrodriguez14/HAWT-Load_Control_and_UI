@@ -1,5 +1,8 @@
 #include "hd44780.h"
 
+#if defined(LCD_RS_PORT) && defined(LCD_EN_PORT) && defined(LCD_D4_PORT) && \
+    defined(LCD_D5_PORT) && defined(LCD_D6_PORT) && defined(LCD_D7_PORT)
+
 // -----------------------------------------------------
 // Delay helper
 // -----------------------------------------------------
@@ -360,3 +363,41 @@ void hd44780_init(void)
    hd44780_clear_screen();
 #endif
 }
+
+#else
+
+void hd44780_init(void)
+{
+}
+
+void hd44780_send_instruction(uint8_t instruction)
+{
+   (void)instruction;
+}
+
+void hd44780_print_char(uint8_t character)
+{
+   (void)character;
+}
+
+void hd44780_print_string(const char *s)
+{
+   (void)s;
+}
+
+void hd44780_clear_screen(void)
+{
+}
+
+void hd44780_set_cursor(uint8_t x, uint8_t y)
+{
+   (void)x;
+   (void)y;
+}
+
+void hd44780_print_u16(uint16_t n)
+{
+   (void)n;
+}
+
+#endif
