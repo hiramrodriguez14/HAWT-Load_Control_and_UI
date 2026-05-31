@@ -7,7 +7,7 @@
 #define VBAT_FILTER_ALPHA 0.1f
 
 static ina229_t ina_bat = {
-    .spi_inst = SPI_0_INST,
+    .spi_inst = INA229_BATTERY_SPI0_INST,
     .cs_port = (uint32_t)BATTERY_CS_PORT,
     .cs_pin = BATTERY_CS_CS1_PIN,
     .r_shunt_ohms = 0.05f,
@@ -16,7 +16,7 @@ static ina229_t ina_bat = {
 };
 
 static ina229_t ina_rect = {
-    .spi_inst = SPI_1_INST,
+    .spi_inst = INA229_RECT_SPI1_INST,
     .cs_port = (uint32_t)RECT_CS_PORT,
     .cs_pin = RECT_CS_CS2_PIN,
     .r_shunt_ohms = 0.05f,

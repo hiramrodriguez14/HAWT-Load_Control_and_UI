@@ -7,7 +7,8 @@
  * Expected SysConfig names for full 20x4 UI support:
  *   LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7
  *   UI_BUTTON_NEXT, UI_BUTTON_PREV, UI_BUTTON_START_STOP, UI_BUTTON_RECORD
- *   UI_LED_RED, UI_LED_GREEN
+ *   UI_LED_START, UI_LED_STOP, UI_LED_IS_RECORDING
+ *   UI_LED_LOAD_UI_OK, UI_LED_TURBINE_OK
  *
  * Configure SPST buttons as active-low with pull-up and rise/fall interrupts.
  */

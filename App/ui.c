@@ -29,6 +29,7 @@ static uint8_t current_page;
 static uint8_t system_running;
 static uint8_t record_enabled;
 static uint8_t lcd_dirty;
+#if defined(UI_BUTTON_PORT)
 static uint8_t next_waiting_release;
 static uint8_t prev_waiting_release;
 static uint8_t start_stop_waiting_release;
@@ -48,6 +49,7 @@ static void handle_spst_button(GPIO_Regs *port,
         *waiting_release = 0U;
     }
 }
+#endif
 
 #if defined(LCD_RS_PORT)
 static uint8_t lcd_col;
@@ -137,19 +139,64 @@ static void lcd_finish_line(void)
 
 static void set_status_leds(void)
 {
-#if defined(UI_LED_RED_PORT) && defined(UI_LED_RED_PIN)
+#if defined(UI_LED_STOP_PORT) && defined(UI_LED_STOP_PIN)
     if (system_running) {
-        DL_GPIO_clearPins(UI_LED_RED_PORT, UI_LED_RED_PIN);
+        DL_GPIO_clearPins(UI_LED_STOP_PORT, UI_LED_STOP_PIN);
     } else {
-        DL_GPIO_setPins(UI_LED_RED_PORT, UI_LED_RED_PIN);
+        DL_GPIO_setPins(UI_LED_STOP_PORT, UI_LED_STOP_PIN);
     }
 #endif
 
-#if defined(UI_LED_GREEN_PORT) && defined(UI_LED_GREEN_PIN)
+#if defined(UI_LED_START_PORT) && defined(UI_LED_START_PIN)
     if (system_running) {
-        DL_GPIO_setPins(UI_LED_GREEN_PORT, UI_LED_GREEN_PIN);
+        DL_GPIO_setPins(UI_LED_START_PORT, UI_LED_START_PIN);
     } else {
-        DL_GPIO_clearPins(UI_LED_GREEN_PORT, UI_LED_GREEN_PIN);
+        DL_GPIO_clearPins(UI_LED_START_PORT, UI_LED_START_PIN);
+    }
+#endif
+}
+
+static void set_record_led(void)
+{
+#if defined(UI_LED_IS_RECORDING_PORT) && defined(UI_LED_IS_RECORDING_PIN)
+    if (record_enabled) {
+        DL_GPIO_setPins(UI_LED_IS_RECORDING_PORT, UI_LED_IS_RECORDING_PIN);
+    } else {
+        DL_GPIO_clearPins(UI_LED_IS_RECORDING_PORT, UI_LED_IS_RECORDING_PIN);
+    }
+#endif
+}
+
+static void set_health_leds(void)
+{
+    const telemetry_snapshot_t *telemetry = telemetry_get_snapshot();
+    uint8_t load_ui_ok = 1U;
+    uint8_t turbine_ok = 1U;
+
+    if ((battery_charger_get_state() == BATTERY_CHARGER_FAULT) ||
+        (mppt_get_state() == MPPT_STATE_FAULT)) {
+        load_ui_ok = 0U;
+    }
+
+    if (!telemetry->turbine_packet_valid ||
+        telemetry->turbine_critical_condition ||
+        (telemetry->turbine_state == TURBINE_STATE_SAFETY)) {
+        turbine_ok = 0U;
+    }
+
+#if defined(UI_LED_LOAD_UI_OK_PORT) && defined(UI_LED_LOAD_UI_OK_PIN)
+    if (load_ui_ok) {
+        DL_GPIO_setPins(UI_LED_LOAD_UI_OK_PORT, UI_LED_LOAD_UI_OK_PIN);
+    } else {
+        DL_GPIO_clearPins(UI_LED_LOAD_UI_OK_PORT, UI_LED_LOAD_UI_OK_PIN);
+    }
+#endif
+
+#if defined(UI_LED_TURBINE_OK_PORT) && defined(UI_LED_TURBINE_OK_PIN)
+    if (turbine_ok) {
+        DL_GPIO_setPins(UI_LED_TURBINE_OK_PORT, UI_LED_TURBINE_OK_PIN);
+    } else {
+        DL_GPIO_clearPins(UI_LED_TURBINE_OK_PORT, UI_LED_TURBINE_OK_PIN);
     }
 #endif
 }
@@ -334,6 +381,8 @@ void ui_init(void)
 #endif
 
     set_status_leds();
+    set_record_led();
+    set_health_leds();
     send_turbine_control();
     draw_lcd();
 }
@@ -359,6 +408,7 @@ void ui_task(void)
 
     if (consume_event(&record_event)) {
         record_enabled = record_enabled ? 0U : 1U;
+        set_record_led();
         lcd_dirty = 1U;
     }
 
@@ -372,6 +422,7 @@ void ui_update(void)
 {
     lcd_dirty = 1U;
     ui_task();
+    set_health_leds();
 
     const telemetry_snapshot_t *telemetry = telemetry_get_snapshot();
 
@@ -401,44 +452,44 @@ void ui_update(void)
 
 void ui_handle_gpio_interrupt(uint32_t gpioa_pending, uint32_t gpiob_pending)
 {
-#if defined(UI_BUTTON_NEXT_PORT) && defined(UI_BUTTON_NEXT_PIN)
-    if (((UI_BUTTON_NEXT_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_NEXT_PIN)) ||
-        ((UI_BUTTON_NEXT_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_NEXT_PIN))) {
-        DL_GPIO_clearInterruptStatus(UI_BUTTON_NEXT_PORT, UI_BUTTON_NEXT_PIN);
-        handle_spst_button(UI_BUTTON_NEXT_PORT,
+#if defined(UI_BUTTON_PORT) && defined(UI_BUTTON_NEXT_PIN)
+    if (((UI_BUTTON_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_NEXT_PIN)) ||
+        ((UI_BUTTON_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_NEXT_PIN))) {
+        DL_GPIO_clearInterruptStatus(UI_BUTTON_PORT, UI_BUTTON_NEXT_PIN);
+        handle_spst_button(UI_BUTTON_PORT,
                            UI_BUTTON_NEXT_PIN,
                            &next_page_event,
                            &next_waiting_release);
     }
 #endif
 
-#if defined(UI_BUTTON_PREV_PORT) && defined(UI_BUTTON_PREV_PIN)
-    if (((UI_BUTTON_PREV_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_PREV_PIN)) ||
-        ((UI_BUTTON_PREV_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_PREV_PIN))) {
-        DL_GPIO_clearInterruptStatus(UI_BUTTON_PREV_PORT, UI_BUTTON_PREV_PIN);
-        handle_spst_button(UI_BUTTON_PREV_PORT,
+#if defined(UI_BUTTON_PORT) && defined(UI_BUTTON_PREV_PIN)
+    if (((UI_BUTTON_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_PREV_PIN)) ||
+        ((UI_BUTTON_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_PREV_PIN))) {
+        DL_GPIO_clearInterruptStatus(UI_BUTTON_PORT, UI_BUTTON_PREV_PIN);
+        handle_spst_button(UI_BUTTON_PORT,
                            UI_BUTTON_PREV_PIN,
                            &prev_page_event,
                            &prev_waiting_release);
     }
 #endif
 
-#if defined(UI_BUTTON_START_STOP_PORT) && defined(UI_BUTTON_START_STOP_PIN)
-    if (((UI_BUTTON_START_STOP_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_START_STOP_PIN)) ||
-        ((UI_BUTTON_START_STOP_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_START_STOP_PIN))) {
-        DL_GPIO_clearInterruptStatus(UI_BUTTON_START_STOP_PORT, UI_BUTTON_START_STOP_PIN);
-        handle_spst_button(UI_BUTTON_START_STOP_PORT,
+#if defined(UI_BUTTON_PORT) && defined(UI_BUTTON_START_STOP_PIN)
+    if (((UI_BUTTON_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_START_STOP_PIN)) ||
+        ((UI_BUTTON_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_START_STOP_PIN))) {
+        DL_GPIO_clearInterruptStatus(UI_BUTTON_PORT, UI_BUTTON_START_STOP_PIN);
+        handle_spst_button(UI_BUTTON_PORT,
                            UI_BUTTON_START_STOP_PIN,
                            &start_stop_event,
                            &start_stop_waiting_release);
     }
 #endif
 
-#if defined(UI_BUTTON_RECORD_PORT) && defined(UI_BUTTON_RECORD_PIN)
-    if (((UI_BUTTON_RECORD_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_RECORD_PIN)) ||
-        ((UI_BUTTON_RECORD_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_RECORD_PIN))) {
-        DL_GPIO_clearInterruptStatus(UI_BUTTON_RECORD_PORT, UI_BUTTON_RECORD_PIN);
-        handle_spst_button(UI_BUTTON_RECORD_PORT,
+#if defined(UI_BUTTON_PORT) && defined(UI_BUTTON_RECORD_PIN)
+    if (((UI_BUTTON_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_RECORD_PIN)) ||
+        ((UI_BUTTON_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_RECORD_PIN))) {
+        DL_GPIO_clearInterruptStatus(UI_BUTTON_PORT, UI_BUTTON_RECORD_PIN);
+        handle_spst_button(UI_BUTTON_PORT,
                            UI_BUTTON_RECORD_PIN,
                            &record_event,
                            &record_waiting_release);

@@ -14,13 +14,13 @@ void load_relay_init(void)
 
 void load_relay_enable(void)
 {
-    DL_GPIO_setPins(RELAY_PORT, RELAY_IN_PIN);
+    DL_GPIO_setPins(BATTERY_RELAY_PORT, BATTERY_RELAY_IN1_PIN);
     state = LOAD_RELAY_ENABLED;
 }
 
 void load_relay_disable(void)
 {
-    DL_GPIO_clearPins(RELAY_PORT, RELAY_IN_PIN);
+    DL_GPIO_clearPins(BATTERY_RELAY_PORT, BATTERY_RELAY_IN1_PIN);
     state = LOAD_RELAY_DISABLED;
 }
 

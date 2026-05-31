@@ -4,9 +4,8 @@
 #include <stdbool.h>
 
 
-#define SD_SPI_INST     SPI_0_INST
-#define SD_CS_PORT      GPIO_GRP_0_PORT
-#define SD_CS_PIN       GPIO_GRP_0_CS_PIN
+#define SD_SPI_INST     SD_CARD_SPI_2_INST
+#define SD_CS_PIN       SD_CS_CS_PIN
 
 
 #define SD_TYPE_UNKNOWN 0

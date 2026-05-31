@@ -46,6 +46,9 @@ void app_init(void)
     NVIC_EnableIRQ(GPIOB_INT_IRQn);
     NVIC_EnableIRQ(UART_TIMER_INST_INT_IRQN);
     NVIC_EnableIRQ(CONVERTERS_TIMER_INST_INT_IRQN);
+#if defined(GPIO_MULTIPLE_GPIOA_INT_IRQN)
+    NVIC_EnableIRQ(GPIO_MULTIPLE_GPIOA_INT_IRQN);
+#endif
 #if defined(GPIO_MULTIPLE_GPIOB_INT_IRQN)
     NVIC_EnableIRQ(GPIO_MULTIPLE_GPIOB_INT_IRQN);
 #endif
@@ -135,7 +138,7 @@ void GROUP1_IRQHandler(void)
     uint32_t pendingA = DL_GPIO_getPendingInterrupt(GPIOA);
     uint32_t pendingB = DL_GPIO_getPendingInterrupt(GPIOB);
 
-    if (pendingB & RECT_ALERT_PIN_2_PIN) {
+    if (pendingA & RECT_ALERT_PIN_2_PIN) {
         DL_GPIO_clearInterruptStatus(RECT_ALERT_PORT, RECT_ALERT_PIN_2_PIN);
         telemetry_set_rectifier_alert_flag();
     }
