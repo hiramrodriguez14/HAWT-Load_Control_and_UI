@@ -1,8 +1,8 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "MSPM0G151X" --part "Default" --package "LQFP-100(PFA)" --product "mspm0_sdk@2.10.00.04"
- * @v2CliArgs --device "MSPM0G1519" --package "LQFP-100(PFA)" --product "mspm0_sdk@2.10.00.04"
+ * @cliArgs --device "MSPM0G351X" --part "Default" --package "LQFP-100(PZ)" --product "mspm0_sdk@2.10.00.04"
+ * @v2CliArgs --device "MSPM0G3519" --package "LQFP-100(PZ)" --product "mspm0_sdk@2.10.00.04"
  * @versions {"tool":"1.26.2+4477"}
  */
 
@@ -214,21 +214,19 @@ SPI3.frameFormat                        = "MOTO3";
 SPI3.chipSelect                         = [];
 SPI3.enableDMAEvent1                    = false;
 SPI3.enableDMAEvent2                    = false;
-SPI3.targetBitRate                      = 8000000;
-SPI3.spiClkSrc                          = "BUSCLK";
 SPI3.$name                              = "SD_CARD_SPI_2";
-SPI3.sclkPinConfig.$name                = "ti_driverlib_gpio_GPIOPinGeneric11";
 SPI3.sclkPinConfig.direction            = scripting.forceWrite("OUTPUT");
 SPI3.sclkPinConfig.onlyInternalResistor = scripting.forceWrite(false);
 SPI3.sclkPinConfig.passedPeripheralType = scripting.forceWrite("Digital");
-SPI3.mosiPinConfig.$name                = "ti_driverlib_gpio_GPIOPinGeneric12";
+SPI3.sclkPinConfig.$name                = "ti_driverlib_gpio_GPIOPinGeneric11";
 SPI3.mosiPinConfig.direction            = scripting.forceWrite("OUTPUT");
 SPI3.mosiPinConfig.hideOutputInversion  = scripting.forceWrite(false);
 SPI3.mosiPinConfig.onlyInternalResistor = scripting.forceWrite(false);
 SPI3.mosiPinConfig.passedPeripheralType = scripting.forceWrite("Digital");
-SPI3.misoPinConfig.$name                = "ti_driverlib_gpio_GPIOPinGeneric13";
+SPI3.mosiPinConfig.$name                = "ti_driverlib_gpio_GPIOPinGeneric12";
 SPI3.misoPinConfig.onlyInternalResistor = scripting.forceWrite(false);
 SPI3.misoPinConfig.passedPeripheralType = scripting.forceWrite("Digital");
+SPI3.misoPinConfig.$name                = "ti_driverlib_gpio_GPIOPinGeneric13";
 
 SYSCTL.forceDefaultClkConfig = true;
 SYSCTL.MFCLKEn               = true;
@@ -278,22 +276,22 @@ GPIO4.associatedPins[0].pin.$suggestSolution  = "PB13";
 GPIO5.associatedPins[0].pin.$suggestSolution  = "PA29";
 GPIO6.associatedPins[0].pin.$suggestSolution  = "PA28";
 GPIO7.associatedPins[0].pin.$suggestSolution  = "PA0";
-GPIO8.associatedPins[0].pin.$suggestSolution  = "PA1";
-GPIO8.associatedPins[1].pin.$suggestSolution  = "PA30";
-GPIO8.associatedPins[2].pin.$suggestSolution  = "PC12";
-GPIO8.associatedPins[3].pin.$suggestSolution  = "PC15";
-GPIO8.associatedPins[4].pin.$suggestSolution  = "PC13";
-GPIO8.associatedPins[5].pin.$suggestSolution  = "PC28";
-GPIO9.associatedPins[0].pin.$suggestSolution  = "PA3";
-GPIO9.associatedPins[1].pin.$suggestSolution  = "PA4";
-GPIO9.associatedPins[2].pin.$suggestSolution  = "PA5";
-GPIO9.associatedPins[3].pin.$suggestSolution  = "PA6";
-GPIO10.associatedPins[0].pin.$suggestSolution = "PB0";
-GPIO10.associatedPins[1].pin.$suggestSolution = "PA7";
-GPIO10.associatedPins[2].pin.$suggestSolution = "PB5";
-GPIO10.associatedPins[3].pin.$suggestSolution = "PA9";
-GPIO10.associatedPins[4].pin.$suggestSolution = "PB28";
-GPIO11.associatedPins[0].pin.$suggestSolution = "PB29";
+GPIO8.associatedPins[0].pin.$suggestSolution  = "PA30";
+GPIO8.associatedPins[1].pin.$suggestSolution  = "PC12";
+GPIO8.associatedPins[2].pin.$suggestSolution  = "PC15";
+GPIO8.associatedPins[3].pin.$suggestSolution  = "PC13";
+GPIO8.associatedPins[4].pin.$suggestSolution  = "PC28";
+GPIO8.associatedPins[5].pin.$suggestSolution  = "PA3";
+GPIO9.associatedPins[0].pin.$suggestSolution  = "PA4";
+GPIO9.associatedPins[1].pin.$suggestSolution  = "PA5";
+GPIO9.associatedPins[2].pin.$suggestSolution  = "PA6";
+GPIO9.associatedPins[3].pin.$suggestSolution  = "PB0";
+GPIO10.associatedPins[0].pin.$suggestSolution = "PA7";
+GPIO10.associatedPins[1].pin.$suggestSolution = "PB5";
+GPIO10.associatedPins[2].pin.$suggestSolution = "PA9";
+GPIO10.associatedPins[3].pin.$suggestSolution = "PB28";
+GPIO10.associatedPins[4].pin.$suggestSolution = "PB29";
+GPIO11.associatedPins[0].pin.$suggestSolution = "PA1";
 PWM1.peripheral.$suggestSolution              = "TIMG0";
 SPI2.peripheral.$suggestSolution              = "SPI2";
 SPI2.peripheral.sclkPin.$suggestSolution      = "PC14";

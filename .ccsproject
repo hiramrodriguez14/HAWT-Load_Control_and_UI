@@ -10,7 +10,7 @@
 	<ignoreDefaultDeviceSettings value="true"/>
 	<ignoreDefaultCCSSettings value="true"/>
 	<templateProperties value="id=empty_LP_MSPM0G3507_nortos_ticlang.projectspec.Load_Control_&amp;_UI,buildProfile=release,isHybrid=true"/>
-	<activeTargetConfiguration value="targetConfigs/MSPM0G1519.ccxml"/>
+	<activeTargetConfiguration value="targetConfigs/MSPM0G3519.ccxml"/>
 	<isTargetConfigurationManual value="false"/>
 	<sourceLookupPath value="${COM_TI_MSPM0_SDK_INSTALL_DIR}/source/ti/driverlib"/>
 	<origin value="/Users/hiramraul11gmail.com/ti/mspm0_sdk_2_10_00_04/examples/nortos/LP_MSPM0G3507/driverlib/empty/ticlang/empty_LP_MSPM0G3507_nortos_ticlang.projectspec"/>
