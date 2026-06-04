@@ -37,6 +37,11 @@ static float read_float_le(const uint8_t *bytes)
     return value;
 }
 
+static uint16_t read_u16_le(const uint8_t *bytes)
+{
+    return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
+}
+
 static void send_byte(uint8_t byte)
 {
 #if defined(TURBINE_UART_INST)
@@ -62,6 +67,14 @@ static void accept_payload(void)
     latest_sample.wind_speed_m_s = read_float_le(&payload[4]);
     latest_sample.state = payload[8];
     latest_sample.critical_condition = (payload[9] != 0U);
+    latest_sample.year = read_u16_le(&payload[10]);
+    latest_sample.month = payload[12];
+    latest_sample.day = payload[13];
+    latest_sample.hour = payload[14];
+    latest_sample.minute = payload[15];
+    latest_sample.second = payload[16];
+    latest_sample.timestamp_valid = true;
+
     sample_ready = 1U;
     packet_count++;
 }

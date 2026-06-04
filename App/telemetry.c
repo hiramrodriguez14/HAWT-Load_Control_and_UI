@@ -2,9 +2,14 @@
 
 #include "ti_msp_dl_config.h"
 #include "drivers/ina229/ina229.h"
+#include "drivers/sd_card/ff.h"
 #include "drivers/uart_debug.h"
 
+#include <stdio.h>
+#include <string.h>
+
 #define VBAT_FILTER_ALPHA 0.1f
+#define TELEMETRY_LOG_FILE "TLOG.CSV"
 
 static ina229_t ina_bat = {
     .spi_inst = INA229_BATTERY_SPI0_INST,
@@ -28,6 +33,11 @@ static telemetry_snapshot_t snapshot;
 static volatile uint8_t bat_flags;
 static volatile uint8_t rect_flags;
 static bool vbat_filter_initialized;
+static FATFS log_fs;
+static FIL log_file;
+static bool log_mounted;
+static bool log_open;
+static uint32_t log_sample_count;
 
 static const int16_t shunt_under_voltage = (int16_t)0x8000;
 static const int16_t shunt_over_voltage = 0x7FFF;
@@ -137,6 +147,63 @@ static bool read_conversion(ina229_t *ina, telemetry_channel_t *channel)
            (ina229_read_power(ina, &channel->power) == INA229_OK);
 }
 
+static bool telemetry_log_write(const char *text)
+{
+    UINT bytes_written;
+    UINT length = (UINT)strlen(text);
+
+    if (f_write(&log_file, text, length, &bytes_written) != FR_OK) {
+        return false;
+    }
+
+    return bytes_written == length;
+}
+
+static bool telemetry_log_open(void)
+{
+    if (!log_mounted) {
+        if (f_mount(&log_fs, "", 1) != FR_OK) {
+            return false;
+        }
+        log_mounted = true;
+    }
+
+    if (!log_open) {
+        if (f_open(&log_file, TELEMETRY_LOG_FILE, FA_OPEN_ALWAYS | FA_WRITE) != FR_OK) {
+            return false;
+        }
+
+        if (f_lseek(&log_file, f_size(&log_file)) != FR_OK) {
+            f_close(&log_file);
+            return false;
+        }
+
+        log_open = true;
+    }
+
+    return true;
+}
+
+static void format_calendar_time(char *buffer,
+                                 size_t buffer_size,
+                                 uint16_t year,
+                                 uint8_t month,
+                                 uint8_t day,
+                                 uint8_t hour,
+                                 uint8_t minute,
+                                 uint8_t second)
+{
+    snprintf(buffer,
+             buffer_size,
+             "%04u-%02u-%02uT%02u:%02u:%02u",
+             year,
+             month,
+             day,
+             hour,
+             minute,
+             second);
+}
+
 static void print_diagnostics(const char *name, uint16_t diagnostics)
 {
     if (diagnostics & (1U << 7)) {
@@ -237,12 +304,87 @@ bool telemetry_sample_power_supervisor(void)
 
 bool telemetry_log_header(void)
 {
-    return false;
+    if (!telemetry_log_open()) {
+        return false;
+    }
+
+    if (f_size(&log_file) != 0U) {
+        return true;
+    }
+
+    if (!telemetry_log_write(
+            "sample,local_time,bat_v,bat_i,bat_p,rect_v,rect_i,rect_p,turbine_time,wind_m_s,rpm,turbine_state,turbine_crit,turbine_rx_ok\r\n")) {
+        return false;
+    }
+
+    return f_sync(&log_file) == FR_OK;
 }
 
 bool telemetry_log_snapshot(void)
 {
-    return false;
+    char line[224];
+    char local_time[24];
+    char turbine_time[24];
+    int length;
+
+    if (!telemetry_log_header()) {
+        return false;
+    }
+
+#if defined(RTC)
+    DL_RTC_Common_Calendar calendar = DL_RTC_Common_getCalendarTime(RTC);
+    format_calendar_time(local_time,
+                         sizeof(local_time),
+                         (uint16_t)calendar.year,
+                         (uint8_t)calendar.month,
+                         (uint8_t)calendar.dayOfMonth,
+                         (uint8_t)calendar.hours,
+                         (uint8_t)calendar.minutes,
+                         (uint8_t)calendar.seconds);
+#else
+    local_time[0] = '\0';
+#endif
+
+    if (snapshot.turbine_timestamp_valid) {
+        format_calendar_time(turbine_time,
+                             sizeof(turbine_time),
+                             snapshot.turbine_year,
+                             snapshot.turbine_month,
+                             snapshot.turbine_day,
+                             snapshot.turbine_hour,
+                             snapshot.turbine_minute,
+                             snapshot.turbine_second);
+    } else {
+        turbine_time[0] = '\0';
+    }
+
+    length = snprintf(line,
+                      sizeof(line),
+                      "%lu,%s,%.3f,%.6f,%.3f,%.3f,%.6f,%.3f,%s,%.3f,%.3f,%u,%u,%u\r\n",
+                      (unsigned long)log_sample_count++,
+                      local_time,
+                      snapshot.battery.filtered_bus_voltage,
+                      snapshot.battery.current,
+                      snapshot.battery.power,
+                      snapshot.rectifier.bus_voltage,
+                      snapshot.rectifier.current,
+                      snapshot.rectifier.power,
+                      turbine_time,
+                      snapshot.turbine_wind_speed_m_s,
+                      snapshot.turbine_rpm,
+                      snapshot.turbine_state,
+                      snapshot.turbine_critical_condition ? 1U : 0U,
+                      snapshot.turbine_packet_valid ? 1U : 0U);
+
+    if ((length <= 0) || ((size_t)length >= sizeof(line))) {
+        return false;
+    }
+
+    if (!telemetry_log_write(line)) {
+        return false;
+    }
+
+    return f_sync(&log_file) == FR_OK;
 }
 
 const telemetry_snapshot_t *telemetry_get_snapshot(void)
@@ -253,12 +395,26 @@ const telemetry_snapshot_t *telemetry_get_snapshot(void)
 void telemetry_update_turbine(float wind_speed_m_s,
                               float rpm,
                               uint8_t state,
-                              bool critical_condition)
+                              bool critical_condition,
+                              bool timestamp_valid,
+                              uint16_t year,
+                              uint8_t month,
+                              uint8_t day,
+                              uint8_t hour,
+                              uint8_t minute,
+                              uint8_t second)
 {
     snapshot.turbine_wind_speed_m_s = wind_speed_m_s;
     snapshot.turbine_rpm = rpm;
     snapshot.turbine_state = state;
     snapshot.turbine_critical_condition = critical_condition;
+    snapshot.turbine_timestamp_valid = timestamp_valid;
+    snapshot.turbine_year = year;
+    snapshot.turbine_month = month;
+    snapshot.turbine_day = day;
+    snapshot.turbine_hour = hour;
+    snapshot.turbine_minute = minute;
+    snapshot.turbine_second = second;
     snapshot.turbine_packet_valid = true;
 }
 

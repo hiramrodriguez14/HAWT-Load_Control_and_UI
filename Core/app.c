@@ -92,7 +92,14 @@ void app_run(void)
             telemetry_update_turbine(turbine_sample.wind_speed_m_s,
                                      turbine_sample.rpm,
                                      turbine_sample.state,
-                                     turbine_sample.critical_condition);
+                                     turbine_sample.critical_condition,
+                                     turbine_sample.timestamp_valid,
+                                     turbine_sample.year,
+                                     turbine_sample.month,
+                                     turbine_sample.day,
+                                     turbine_sample.hour,
+                                     turbine_sample.minute,
+                                     turbine_sample.second);
         }
 
         if (consume_u8_flag(&time_to_uart)) {

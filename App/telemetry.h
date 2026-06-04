@@ -26,6 +26,13 @@ typedef struct {
     uint8_t turbine_state;
     bool turbine_critical_condition;
     bool turbine_packet_valid;
+    bool turbine_timestamp_valid;
+    uint16_t turbine_year;
+    uint8_t turbine_month;
+    uint8_t turbine_day;
+    uint8_t turbine_hour;
+    uint8_t turbine_minute;
+    uint8_t turbine_second;
 } telemetry_snapshot_t;
 
 bool telemetry_init(void);
@@ -38,7 +45,14 @@ const telemetry_snapshot_t *telemetry_get_snapshot(void);
 void telemetry_update_turbine(float wind_speed_m_s,
                               float rpm,
                               uint8_t state,
-                              bool critical_condition);
+                              bool critical_condition,
+                              bool timestamp_valid,
+                              uint16_t year,
+                              uint8_t month,
+                              uint8_t day,
+                              uint8_t hour,
+                              uint8_t minute,
+                              uint8_t second);
 void telemetry_set_battery_alert_flag(void);
 void telemetry_set_rectifier_alert_flag(void);
 
