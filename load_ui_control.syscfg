@@ -35,6 +35,7 @@ const TIMER1 = TIMER.addInstance();
 const TIMER2 = TIMER.addInstance();
 const UART   = scripting.addModule("/ti/driverlib/UART", {}, false);
 const UART1  = UART.addInstance();
+const UART2  = UART.addInstance();
 
 /**
  * Write custom configuration values to the imported modules.
@@ -258,6 +259,20 @@ UART1.peripheral.txPin.$assign = "PA10";
 UART1.txPinConfig.$name        = "ti_driverlib_gpio_GPIOPinGeneric3";
 UART1.rxPinConfig.$name        = "ti_driverlib_gpio_GPIOPinGeneric4";
 
+UART2.$name                            = "TURBINE_UART";
+UART2.enableFIFO                       = true;
+UART2.rxFifoThreshold                  = "DL_UART_RX_FIFO_LEVEL_ONE_ENTRY";
+UART2.enabledInterrupts                = ["RX","RX_TIMEOUT_ERROR"];
+UART2.txPinConfig.$name                = "ti_driverlib_gpio_GPIOPinGeneric14";
+UART2.txPinConfig.direction            = scripting.forceWrite("OUTPUT");
+UART2.txPinConfig.hideOutputInversion  = scripting.forceWrite(false);
+UART2.txPinConfig.onlyInternalResistor = scripting.forceWrite(false);
+UART2.txPinConfig.passedPeripheralType = scripting.forceWrite("Digital");
+UART2.rxPinConfig.$name                = "ti_driverlib_gpio_GPIOPinGeneric15";
+UART2.rxPinConfig.hideOutputInversion  = scripting.forceWrite(false);
+UART2.rxPinConfig.onlyInternalResistor = scripting.forceWrite(false);
+UART2.rxPinConfig.passedPeripheralType = scripting.forceWrite("Digital");
+
 const ProjectConfig              = scripting.addModule("/ti/project_config/ProjectConfig", {}, false);
 ProjectConfig.migrationCondition = true;
 
@@ -298,7 +313,10 @@ SPI2.peripheral.sclkPin.$suggestSolution      = "PC14";
 SPI2.peripheral.mosiPin.$suggestSolution      = "PB4";
 SPI2.peripheral.misoPin.$suggestSolution      = "PA2";
 SPI3.peripheral.$suggestSolution              = "SPI1";
-SPI3.peripheral.sclkPin.$suggestSolution      = "PA17";
-SPI3.peripheral.mosiPin.$suggestSolution      = "PA18";
+SPI3.peripheral.sclkPin.$suggestSolution      = "PB16";
+SPI3.peripheral.mosiPin.$suggestSolution      = "PB15";
 SPI3.peripheral.misoPin.$suggestSolution      = "PA16";
 SYSCTL.peripheral.$suggestSolution            = "SYSCTL";
+UART2.peripheral.$suggestSolution             = "UART1";
+UART2.peripheral.rxPin.$suggestSolution       = "PA18";
+UART2.peripheral.txPin.$suggestSolution       = "PA17";
