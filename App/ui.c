@@ -431,34 +431,34 @@ void ui_update(void)
 
 void ui_handle_gpio_interrupt(uint32_t gpioa_pending, uint32_t gpiob_pending)
 {
-#if defined(UI_BUTTON_PORT) && defined(UI_BUTTON_NEXT_PIN)
-    if (((UI_BUTTON_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_NEXT_PIN)) ||
-        ((UI_BUTTON_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_NEXT_PIN))) {
-        DL_GPIO_clearInterruptStatus(UI_BUTTON_PORT, UI_BUTTON_NEXT_PIN);
+#if defined(UI_BUTTON_NEXT_PORT) && defined(UI_BUTTON_NEXT_PIN)
+    if (((UI_BUTTON_NEXT_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_NEXT_PIN)) ||
+        ((UI_BUTTON_NEXT_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_NEXT_PIN))) {
+        DL_GPIO_clearInterruptStatus(UI_BUTTON_NEXT_PORT, UI_BUTTON_NEXT_PIN);
         next_page_event = 1U;
     }
 #endif
 
-#if defined(UI_BUTTON_PORT) && defined(UI_BUTTON_PREV_PIN)
-    if (((UI_BUTTON_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_PREV_PIN)) ||
-        ((UI_BUTTON_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_PREV_PIN))) {
-        DL_GPIO_clearInterruptStatus(UI_BUTTON_PORT, UI_BUTTON_PREV_PIN);
+#if defined(UI_BUTTON_PREV_PORT) && defined(UI_BUTTON_PREV_PIN)
+    if (((UI_BUTTON_PREV_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_PREV_PIN)) ||
+        ((UI_BUTTON_PREV_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_PREV_PIN))) {
+        DL_GPIO_clearInterruptStatus(UI_BUTTON_PREV_PORT, UI_BUTTON_PREV_PIN);
         prev_page_event = 1U;
     }
 #endif
 
-#if defined(UI_BUTTON_PORT) && defined(UI_BUTTON_START_STOP_PIN)
-    if (((UI_BUTTON_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_START_STOP_PIN)) ||
-        ((UI_BUTTON_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_START_STOP_PIN))) {
-        DL_GPIO_clearInterruptStatus(UI_BUTTON_PORT, UI_BUTTON_START_STOP_PIN);
+#if defined(UI_BUTTON_START_STOP_PORT) && defined(UI_BUTTON_START_STOP_PIN)
+    if (((UI_BUTTON_START_STOP_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_START_STOP_PIN)) ||
+        ((UI_BUTTON_START_STOP_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_START_STOP_PIN))) {
+        DL_GPIO_clearInterruptStatus(UI_BUTTON_START_STOP_PORT, UI_BUTTON_START_STOP_PIN);
         start_stop_event = 1U;
     }
 #endif
 
-#if defined(UI_BUTTON_PORT) && defined(UI_BUTTON_RECORD_PIN)
-    if (((UI_BUTTON_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_RECORD_PIN)) ||
-        ((UI_BUTTON_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_RECORD_PIN))) {
-        DL_GPIO_clearInterruptStatus(UI_BUTTON_PORT, UI_BUTTON_RECORD_PIN);
+#if defined(UI_BUTTON_RECORD_PORT) && defined(UI_BUTTON_RECORD_PIN)
+    if (((UI_BUTTON_RECORD_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_RECORD_PIN)) ||
+        ((UI_BUTTON_RECORD_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_RECORD_PIN))) {
+        DL_GPIO_clearInterruptStatus(UI_BUTTON_RECORD_PORT, UI_BUTTON_RECORD_PIN);
         record_event = 1U;
     }
 #endif
