@@ -262,7 +262,18 @@ void hd44780_clear_screen(void)
 
 void hd44780_set_cursor(uint8_t x, uint8_t y)
 {
-   uint8_t addr = (y == 0) ? (0x00 + x) : (0x40 + x);
+   static const uint8_t row_offsets[4] = {0x00U, 0x40U, 0x14U, 0x54U};
+   uint8_t addr;
+
+   if (x >= 20U) {
+      x = 19U;
+   }
+
+   if (y >= 4U) {
+      y = 3U;
+   }
+
+   addr = (uint8_t)(row_offsets[y] + x);
    hd44780_send_instruction(0x80 | addr);
 }
 

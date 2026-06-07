@@ -25,7 +25,7 @@ void uart_send_string(const char *s)
 
 void uart_printf(const char *fmt, ...)
 {
-    char buffer[256];
+    char buffer[512];
     va_list args;
     int len;
 

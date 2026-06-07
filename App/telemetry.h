@@ -45,8 +45,6 @@ const telemetry_snapshot_t *telemetry_get_snapshot(void);
 void telemetry_update_turbine(float wind_speed_m_s,
                               float rpm,
                               uint8_t state,
-                              bool critical_condition,
-                              bool timestamp_valid,
                               uint16_t year,
                               uint8_t month,
                               uint8_t day,

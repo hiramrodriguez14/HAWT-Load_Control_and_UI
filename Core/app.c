@@ -43,6 +43,7 @@ void app_init(void)
 {
     SYSCFG_DL_init();
 
+    NVIC_EnableIRQ(UART_TURBINE_INST_INT_IRQN);
     NVIC_EnableIRQ(UART_TIMER_INST_INT_IRQN);
     NVIC_EnableIRQ(CONVERTERS_TIMER_INST_INT_IRQN);
 #if defined(GPIO_MULTIPLE_GPIOA_INT_IRQN)
@@ -65,7 +66,7 @@ void app_init(void)
     DL_Timer_startCounter(PWM_0_INST);
     DL_Timer_startCounter(CONVERTERS_TIMER_INST);
 
-    turbine_uart_init();
+    // turbine_uart_init();
     load_relay_init();
     dump_load_init();
     converter_init();
@@ -87,20 +88,24 @@ void app_run(void)
         telemetry_process_alerts();
         ui_task();
 
-        turbine_uart_sample_t turbine_sample;
-        if (turbine_uart_get_latest(&turbine_sample)) {
-            telemetry_update_turbine(turbine_sample.wind_speed_m_s,
-                                     turbine_sample.rpm,
-                                     turbine_sample.state,
-                                     turbine_sample.critical_condition,
-                                     turbine_sample.timestamp_valid,
-                                     turbine_sample.year,
-                                     turbine_sample.month,
-                                     turbine_sample.day,
-                                     turbine_sample.hour,
-                                     turbine_sample.minute,
-                                     turbine_sample.second);
+        if (global_rx_packet_ready) {
+            global_rx_packet_ready = false;
+
+            telemetry_update_turbine(global_rx_packet.wind_speed_m_s,
+                                     global_rx_packet.hall_effect_rpm,
+                                     global_rx_packet.state,
+                                    //  global_rx_packet.critical_condition,
+                                    //  global_rx_packet.timestamp_valid,
+                                     global_rx_packet.calendar.year,
+                                     global_rx_packet.calendar.month,
+                                     global_rx_packet.calendar.dayOfMonth,
+                                     global_rx_packet.calendar.hours,
+                                     global_rx_packet.calendar.minutes,
+                                     global_rx_packet.calendar.seconds);
+
         }
+
+        
 
         if (consume_u8_flag(&time_to_uart)) {
             ui_update();
@@ -143,20 +148,20 @@ void app_run(void)
 
 void GROUP1_IRQHandler(void)
 {
-    uint32_t pendingA = DL_GPIO_getPendingInterrupt(GPIOA);
-    uint32_t pendingB = DL_GPIO_getPendingInterrupt(GPIOB);
+ 
+    uint32_t pendingA_iidx = DL_GPIO_getPendingInterrupt(GPIOA);
+    uint32_t pendingB_iidx = DL_GPIO_getPendingInterrupt(GPIOB);
 
-    if (pendingA & RECT_ALERT_PIN_2_PIN) {
-        DL_GPIO_clearInterruptStatus(RECT_ALERT_PORT, RECT_ALERT_PIN_2_PIN);
+    if (pendingB_iidx == RECT_ALERT_PIN_17_IIDX) {
         telemetry_set_rectifier_alert_flag();
     }
 
-    if (pendingB & BAT_ALERT_PIN_1_PIN) {
-        DL_GPIO_clearInterruptStatus(BAT_ALERT_PORT, BAT_ALERT_PIN_1_PIN);
+    if (pendingB_iidx == BAT_ALERT_PIN_1_IIDX) {
         telemetry_set_battery_alert_flag();
     }
 
-    ui_handle_gpio_interrupt(pendingA, pendingB);
+    ui_handle_gpio_interrupt(pendingA_iidx, pendingB_iidx);
+
 }
 
 void UART_TIMER_INST_IRQHandler(void)

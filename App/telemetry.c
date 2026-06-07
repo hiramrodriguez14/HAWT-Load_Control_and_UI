@@ -12,19 +12,19 @@
 #define TELEMETRY_LOG_FILE "TLOG.CSV"
 
 static ina229_t ina_bat = {
-    .spi_inst = INA229_BATTERY_SPI0_INST,
+    .spi_inst = INA229_BATTERY_SPI1_INST,
     .cs_port = (uint32_t)BATTERY_CS_PORT,
     .cs_pin = BATTERY_CS_CS1_PIN,
-    .r_shunt_ohms = 0.05f,
+    .r_shunt_ohms = 0.015f,
     .current_lsb = 6.25e-6f,
     .adc_range = 0
 };
 
 static ina229_t ina_rect = {
-    .spi_inst = INA229_RECT_SPI1_INST,
+    .spi_inst = INA229_RECT_SPI0_INST,
     .cs_port = (uint32_t)RECT_CS_PORT,
     .cs_pin = RECT_CS_CS2_PIN,
-    .r_shunt_ohms = 0.05f,
+    .r_shunt_ohms = 0.015f,
     .current_lsb = 6.25e-6f,
     .adc_range = 0
 };
@@ -43,7 +43,7 @@ static const int16_t shunt_under_voltage = (int16_t)0x8000;
 static const int16_t shunt_over_voltage = 0x7FFF;
 static const int16_t bus_under_voltage = 0;
 static const int16_t bus_over_voltage = 0x7FFF;
-static const int16_t temperature_limit = 4000;
+static const int16_t temperature_limit = 4836;
 static const int16_t power_limit = 0x7FFF;
 
 static uint8_t consume_u8_flag(volatile uint8_t *flag)
@@ -395,8 +395,8 @@ const telemetry_snapshot_t *telemetry_get_snapshot(void)
 void telemetry_update_turbine(float wind_speed_m_s,
                               float rpm,
                               uint8_t state,
-                              bool critical_condition,
-                              bool timestamp_valid,
+                            //   bool critical_condition,
+                            //   bool timestamp_valid,
                               uint16_t year,
                               uint8_t month,
                               uint8_t day,
@@ -407,8 +407,8 @@ void telemetry_update_turbine(float wind_speed_m_s,
     snapshot.turbine_wind_speed_m_s = wind_speed_m_s;
     snapshot.turbine_rpm = rpm;
     snapshot.turbine_state = state;
-    snapshot.turbine_critical_condition = critical_condition;
-    snapshot.turbine_timestamp_valid = timestamp_valid;
+    // snapshot.turbine_critical_condition = critical_condition;
+    // snapshot.turbine_timestamp_valid = timestamp_valid;
     snapshot.turbine_year = year;
     snapshot.turbine_month = month;
     snapshot.turbine_day = day;

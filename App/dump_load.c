@@ -11,16 +11,16 @@ void dump_load_init(void)
 
 void dump_load_enable(void)
 {
-#if defined(DUMP_LOAD_RELAY_PORT) && defined(DUMP_LOAD_RELAY_IN2_PIN)
-    DL_GPIO_setPins(DUMP_LOAD_RELAY_PORT, DUMP_LOAD_RELAY_IN2_PIN);
+#if defined(DUMP_LOAD_RELAY_PORT) && defined(DUMP_LOAD_RELAY_IN1_PIN)
+    DL_GPIO_setPins(DUMP_LOAD_RELAY_PORT, DUMP_LOAD_RELAY_IN1_PIN);
 #endif
     state = DUMP_LOAD_ENABLED;
 }
 
 void dump_load_disable(void)
 {
-#if defined(DUMP_LOAD_RELAY_PORT) && defined(DUMP_LOAD_RELAY_IN2_PIN)
-    DL_GPIO_clearPins(DUMP_LOAD_RELAY_PORT, DUMP_LOAD_RELAY_IN2_PIN);
+#if defined(DUMP_LOAD_RELAY_PORT) && defined(DUMP_LOAD_RELAY_IN1_PIN)
+    DL_GPIO_clearPins(DUMP_LOAD_RELAY_PORT, DUMP_LOAD_RELAY_IN1_PIN);
 #endif
     state = DUMP_LOAD_DISABLED;
 }

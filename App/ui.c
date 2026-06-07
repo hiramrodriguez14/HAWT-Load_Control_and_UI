@@ -180,11 +180,6 @@ static void set_health_leds(void)
 #endif
 }
 
-static void send_turbine_control(void)
-{
-    turbine_uart_send_control(system_running ? UI_LOCAL_STATE_RUN : UI_LOCAL_STATE_STOP,
-                              system_running ? false : true);
-}
 
 static uint8_t consume_event(volatile uint8_t *event)
 {
@@ -362,7 +357,7 @@ void ui_init(void)
     set_status_leds();
     set_record_led();
     set_health_leds();
-    send_turbine_control();
+    //send_turbine_control(); Because turbien mcu is not connected yet this makes the program hang
     draw_lcd();
 }
 
@@ -381,7 +376,7 @@ void ui_task(void)
     if (consume_event(&start_stop_event)) {
         system_running = system_running ? 0U : 1U;
         set_status_leds();
-        send_turbine_control();
+        //send_turbine_control(); for now
         lcd_dirty = 1U;
     }
 
@@ -429,39 +424,31 @@ void ui_update(void)
         telemetry->turbine_critical_condition ? 1U : 0U);
 }
 
-void ui_handle_gpio_interrupt(uint32_t gpioa_pending, uint32_t gpiob_pending)
+void ui_handle_gpio_interrupt(uint32_t gpioa_iidx, uint32_t gpiob_iidx)
 {
-#if defined(UI_BUTTON_NEXT_PORT) && defined(UI_BUTTON_NEXT_PIN)
-    if (((UI_BUTTON_NEXT_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_NEXT_PIN)) ||
-        ((UI_BUTTON_NEXT_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_NEXT_PIN))) {
-        DL_GPIO_clearInterruptStatus(UI_BUTTON_NEXT_PORT, UI_BUTTON_NEXT_PIN);
-        next_page_event = 1U;
-    }
-#endif
+    #if defined(UI_BUTTON_NEXT_IIDX)
+        if (gpiob_iidx == UI_BUTTON_NEXT_IIDX) {
+            next_page_event = 1U;
+        }
+    #endif
 
-#if defined(UI_BUTTON_PREV_PORT) && defined(UI_BUTTON_PREV_PIN)
-    if (((UI_BUTTON_PREV_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_PREV_PIN)) ||
-        ((UI_BUTTON_PREV_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_PREV_PIN))) {
-        DL_GPIO_clearInterruptStatus(UI_BUTTON_PREV_PORT, UI_BUTTON_PREV_PIN);
-        prev_page_event = 1U;
-    }
-#endif
+    #if defined(UI_BUTTON_PREV_IIDX)
+        if (gpiob_iidx == UI_BUTTON_PREV_IIDX) {
+            prev_page_event = 1U;
+        }
+    #endif
 
-#if defined(UI_BUTTON_START_STOP_PORT) && defined(UI_BUTTON_START_STOP_PIN)
-    if (((UI_BUTTON_START_STOP_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_START_STOP_PIN)) ||
-        ((UI_BUTTON_START_STOP_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_START_STOP_PIN))) {
-        DL_GPIO_clearInterruptStatus(UI_BUTTON_START_STOP_PORT, UI_BUTTON_START_STOP_PIN);
-        start_stop_event = 1U;
-    }
-#endif
+    #if defined(UI_BUTTON_START_STOP_IIDX)
+        if (gpiob_iidx == UI_BUTTON_START_STOP_IIDX) {
+            start_stop_event = 1U;
+        }
+    #endif
 
-#if defined(UI_BUTTON_RECORD_PORT) && defined(UI_BUTTON_RECORD_PIN)
-    if (((UI_BUTTON_RECORD_PORT == GPIOA) && (gpioa_pending & UI_BUTTON_RECORD_PIN)) ||
-        ((UI_BUTTON_RECORD_PORT == GPIOB) && (gpiob_pending & UI_BUTTON_RECORD_PIN))) {
-        DL_GPIO_clearInterruptStatus(UI_BUTTON_RECORD_PORT, UI_BUTTON_RECORD_PIN);
-        record_event = 1U;
-    }
-#endif
+    #if defined(UI_BUTTON_RECORD_IIDX)
+        if (gpioa_iidx == UI_BUTTON_RECORD_IIDX) {
+            record_event = 1U;
+        }
+    #endif
 }
 
 unsigned char ui_is_system_running(void)

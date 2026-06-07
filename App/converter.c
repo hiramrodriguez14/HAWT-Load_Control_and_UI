@@ -88,6 +88,12 @@ void converter_init(void)
         }
     }
 
+    MCP45HV51_setWiperRaw(0);
+    delay_cycles(32000000U);
+    MCP45HV51_setWiperRaw(128);
+    delay_cycles(32000000U);
+    MCP45HV51_setWiperRaw(255);
+    
     if (converters[CONVERTER_CHANNEL_BATTERY].mode == CONVERTER_MODE_MCP45HV51) {
         converters[CONVERTER_CHANNEL_BATTERY].last_pot_code = (uint8_t)(0.3f * 255.0f);
     }
