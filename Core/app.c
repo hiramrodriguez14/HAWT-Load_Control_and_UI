@@ -114,6 +114,7 @@ void app_run(void)
                                        telemetry->battery.current);
                 load_relay_update(telemetry->battery.filtered_bus_voltage);
             }
+            (void)telemetry_sample_power_supervisor();
         }
 
         __WFI();

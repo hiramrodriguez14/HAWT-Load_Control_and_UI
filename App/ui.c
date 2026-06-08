@@ -13,7 +13,7 @@
 
 #define UI_LCD_COLS        20U
 #define UI_LCD_ROWS        4U
-#define UI_PAGE_COUNT      3U
+#define UI_PAGE_COUNT      4U
 #define UI_LOCAL_STATE_RUN  1U
 #define UI_LOCAL_STATE_STOP 0U
 
@@ -293,6 +293,29 @@ static void draw_lcd(void)
             lcd_print_string_limited(global_rx_packet_ready ? "OK" : "--");
             lcd_finish_line();
             break;
+        
+        case 3:
+            lcd_begin_line(0U);
+            lcd_print_string_limited("RECTIFIER");
+            lcd_finish_line();
+
+            lcd_begin_line(1U);
+            lcd_print_string_limited("Vrect: ");
+            lcd_print_fixed(telemetry->rectifier.bus_voltage, 3U);
+            lcd_print_char_limited('V');
+            lcd_finish_line();
+            
+            lcd_begin_line(2U);
+            lcd_print_string_limited("Irect: ");
+            lcd_print_fixed(telemetry->rectifier.current,3U);
+            lcd_print_char_limited('A');
+            lcd_finish_line();
+
+            lcd_begin_line(3U);
+            lcd_print_string_limited("Prect: ");
+            lcd_print_fixed(telemetry->rectifier.power,3U);
+            lcd_print_char_limited('W');
+            lcd_finish_line();
 
         default:
             break;
