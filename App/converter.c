@@ -8,7 +8,7 @@
 #define OUTPUT_MIN              0.05f
 #define OUTPUT_MAX              0.99f
 #define SAFE_OFF_POT_CODE       255U
-#define MCP45HV51_WAIT_TIME     10U
+#define MCP45HV51_WAIT_TIME     0U
 
 typedef struct {
     converter_mode_t mode;
@@ -38,6 +38,26 @@ static converter_state_t *get_converter(converter_channel_t channel)
     }
 
     return &converters[channel];
+}
+
+static float clamp_output(float value)
+{
+    if (value > OUTPUT_MAX) {
+        return OUTPUT_MAX;
+    }
+
+    if (value < OUTPUT_MIN) {
+        return OUTPUT_MIN;
+    }
+
+    return value;
+}
+
+static uint8_t output_to_pot_code(float value)
+{
+    float clamped = clamp_output(value);
+
+    return (uint8_t)((1.0f - clamped) * (float)SAFE_OFF_POT_CODE);
 }
 
 static void update_pwm_from_value(converter_channel_t channel, float value)
@@ -88,21 +108,26 @@ void converter_init(void)
         }
     }
 
-    MCP45HV51_setWiperRaw(0);
+    MCP45HV51_setRheostatAW_Ohms(0);
     delay_cycles(32000000U);
-    MCP45HV51_setWiperRaw(128);
+    MCP45HV51_setRheostatAW_Ohms(2500);
     delay_cycles(32000000U);
-    MCP45HV51_setWiperRaw(255);
+    MCP45HV51_setRheostatAW_Ohms(5000);
+    delay_cycles(32000000U);
+    MCP45HV51_setRheostatAW_Ohms(7500);
+    delay_cycles(32000000U);
+    MCP45HV51_setRheostatAW_Ohms(10000);
+    
     
     if (converters[CONVERTER_CHANNEL_BATTERY].mode == CONVERTER_MODE_MCP45HV51) {
-        converters[CONVERTER_CHANNEL_BATTERY].last_pot_code = (uint8_t)(0.3f * 255.0f);
+        converters[CONVERTER_CHANNEL_BATTERY].last_pot_code = output_to_pot_code(0.30f);
     }
 
     if (converters[CONVERTER_CHANNEL_MPPT].mode == CONVERTER_MODE_MCP45HV51) {
-        converters[CONVERTER_CHANNEL_MPPT].last_pot_code = (uint8_t)(0.3f * 255.0f);
+        converters[CONVERTER_CHANNEL_MPPT].last_pot_code = output_to_pot_code(0.30f);
     }
 
-    if (!MCP45HV51_setWiperRaw((uint8_t)(0.3f * 255.0f))) {
+    if (!MCP45HV51_setWiperRaw(output_to_pot_code(0.30f))) {
         uart_printf("MCP45HV51 initial wiper failed\r\n");
         while (1) {
         }
@@ -114,7 +139,9 @@ void converter_increase_output(converter_channel_t channel)
     converter_state_t *converter = get_converter(channel);
 
     if (converter->mode == CONVERTER_MODE_MCP45HV51) {
-        if (pot_step_ready(converter) && MCP45HV51_decrementWiper() && (converter->last_pot_code > 0U)) {
+        if ((converter->last_pot_code > 0U) &&
+            pot_step_ready(converter) &&
+            MCP45HV51_decrementWiper()) {
             converter->last_pot_code--;
         }
     } else {
@@ -127,11 +154,33 @@ void converter_decrease_output(converter_channel_t channel)
     converter_state_t *converter = get_converter(channel);
 
     if (converter->mode == CONVERTER_MODE_MCP45HV51) {
-        if (pot_step_ready(converter) && MCP45HV51_incrementWiper() && (converter->last_pot_code < SAFE_OFF_POT_CODE)) {
+        if ((converter->last_pot_code < SAFE_OFF_POT_CODE) &&
+            pot_step_ready(converter) &&
+            MCP45HV51_incrementWiper()) {
             converter->last_pot_code++;
         }
     } else {
         converter->duty -= DUTY_STEP;
+    }
+}
+
+void converter_set_output(converter_channel_t channel, float value)
+{
+    converter_state_t *converter = get_converter(channel);
+    float clamped = clamp_output(value);
+
+    converter->duty = clamped;
+
+    if (converter->mode == CONVERTER_MODE_PWM) {
+        update_pwm_from_value(channel, clamped);
+    } else {
+        uint8_t pot_code = output_to_pot_code(clamped);
+
+        if (MCP45HV51_setWiperRaw(pot_code)) {
+            converter->last_pot_code = pot_code;
+        } else {
+            uart_printf("MCP45HV51 output write failed\r\n");
+        }
     }
 }
 
@@ -144,13 +193,7 @@ void converter_apply(converter_channel_t channel, bool fault_active)
         return;
     }
 
-    if (converter->duty > OUTPUT_MAX) {
-        converter->duty = OUTPUT_MAX;
-    }
-
-    if (converter->duty < OUTPUT_MIN) {
-        converter->duty = OUTPUT_MIN;
-    }
+    converter->duty = clamp_output(converter->duty);
 
     if (converter->mode == CONVERTER_MODE_PWM) {
         update_pwm_from_value(channel, converter->duty);
@@ -186,7 +229,14 @@ void converter_set_voltage_reference(converter_channel_t channel, float voltage)
 
 float converter_get_duty(converter_channel_t channel)
 {
-    return get_converter(channel)->duty;
+    converter_state_t *converter = get_converter(channel);
+
+    if (converter->mode == CONVERTER_MODE_MCP45HV51) {
+        return (float)(SAFE_OFF_POT_CODE - converter->last_pot_code) /
+               (float)SAFE_OFF_POT_CODE;
+    }
+
+    return converter->duty;
 }
 
 float converter_get_voltage_reference(converter_channel_t channel)

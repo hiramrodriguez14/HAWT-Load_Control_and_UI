@@ -1,11 +1,14 @@
 #include "mppt.h"
 
 #include "converter.h"
+#include "drivers/uart_debug.h"
 
 #define MPPT_DUTY_MIN       0.05f
 #define MPPT_DUTY_MAX       0.99f
-#define MPPT_DUTY_STEP      0.0005f
+#define MPPT_DUTY_STEP      (4.0f / 255.0f)
 #define MPPT_MIN_INPUT_V    5.0f
+#define MPPT_START_DUTY     0.30f
+#define MPPT_POWER_DEADBAND_W 0.10f
 
 static mppt_state_t state;
 static float target_duty;
@@ -16,12 +19,6 @@ static unsigned char have_previous_sample;
 
 static void perturb_output(void)
 {
-    if (direction > 0) {
-        converter_increase_output(CONVERTER_CHANNEL_MPPT);
-    } else {
-        converter_decrease_output(CONVERTER_CHANNEL_MPPT);
-    }
-
     target_duty += (float)direction * MPPT_DUTY_STEP;
 
     if (target_duty > MPPT_DUTY_MAX) {
@@ -33,6 +30,8 @@ static void perturb_output(void)
     } else {
         state = MPPT_STATE_TRACK;
     }
+
+    converter_set_output(CONVERTER_CHANNEL_MPPT, target_duty);
 }
 
 void mppt_init(void)
@@ -49,7 +48,8 @@ void mppt_enable(void)
 {
     enabled = 1U;
     state = MPPT_STATE_SEARCH;
-    target_duty = converter_get_duty(CONVERTER_CHANNEL_MPPT);
+    target_duty = MPPT_START_DUTY;
+    converter_set_output(CONVERTER_CHANNEL_MPPT, target_duty);
     previous_input_power = 0.0f;
     direction = 1;
     have_previous_sample = 0U;
@@ -66,6 +66,7 @@ void mppt_disable(void)
 void mppt_update(float vin, float iin, float vout, float iout)
 {
     float input_power = vin * iin;
+    float delta_power;
 
     (void)vout;
     (void)iout;
@@ -79,6 +80,12 @@ void mppt_update(float vin, float iin, float vout, float iout)
         state = MPPT_STATE_FAULT;
         have_previous_sample = 0U;
         converter_disable(CONVERTER_CHANNEL_MPPT);
+        uart_printf("MPPTDBG state=FAULT vin=%.3f iin=%.3f pin=%.3f pot=%u duty=%.3f\r\n",
+                    vin,
+                    iin,
+                    input_power,
+                    converter_get_pot_code(CONVERTER_CHANNEL_MPPT),
+                    converter_get_duty(CONVERTER_CHANNEL_MPPT));
         return;
     }
 
@@ -96,10 +103,20 @@ void mppt_update(float vin, float iin, float vout, float iout)
             state = MPPT_STATE_SEARCH;
         }
         converter_apply(CONVERTER_CHANNEL_MPPT, false);
+        uart_printf("MPPTDBG state=%s vin=%.3f iin=%.3f pin=%.3f dp=0.000 dir=%d pot=%u duty=%.3f\r\n",
+                    mppt_state_to_string(state),
+                    vin,
+                    iin,
+                    input_power,
+                    direction,
+                    converter_get_pot_code(CONVERTER_CHANNEL_MPPT),
+                    converter_get_duty(CONVERTER_CHANNEL_MPPT));
         return;
     }
 
-    if (input_power < previous_input_power) {
+    delta_power = input_power - previous_input_power;
+
+    if (delta_power < -MPPT_POWER_DEADBAND_W) {
         direction = -direction;
     }
 
@@ -108,6 +125,16 @@ void mppt_update(float vin, float iin, float vout, float iout)
     previous_input_power = input_power;
 
     converter_apply(CONVERTER_CHANNEL_MPPT, state == MPPT_STATE_FAULT);
+
+    uart_printf("MPPTDBG state=%s vin=%.3f iin=%.3f pin=%.3f dp=%.3f dir=%d pot=%u duty=%.3f\r\n",
+                mppt_state_to_string(state),
+                vin,
+                iin,
+                input_power,
+                delta_power,
+                direction,
+                converter_get_pot_code(CONVERTER_CHANNEL_MPPT),
+                converter_get_duty(CONVERTER_CHANNEL_MPPT));
 }
 
 mppt_state_t mppt_get_state(void)

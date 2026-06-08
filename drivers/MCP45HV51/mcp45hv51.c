@@ -1,22 +1,6 @@
 /*
- * main.c
  *
- * LP-MSPM0G3507 + MCP45HV51-103E/ST
- *
- * Device:
- *   MCP45HV51 = 8-bit volatile digital potentiometer
- *   103       = 10 kOhm nominal RAB
- *   E/ST      = TSSOP-14, -40C to +125C
- *
- * I2C:
- *   Uses the SysConfig-generated MCP45HV51_INST from ti_msp_dl_config.h.
- *   In your uploaded SysConfig this is:
- *      MCP45HV51_INST = I2C1
- *      SCL      = PB2
- *      SDA      = PB3
- *      speed    = 400 kHz
- *
- * Suggested wiring:
+ * Wiring:
  *   MCP45HV51 pin     Connection
  *   ---------------------------------------------
  *   VL                3.3V from LaunchPad
