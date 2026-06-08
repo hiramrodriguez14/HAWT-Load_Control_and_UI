@@ -2,10 +2,7 @@
 
 #include "battery_charger.h"
 #include "converter.h"
-#include "dump_load.h"
 #include "load_relay.h"
-#include "load_supervisor.h"
-#include "mppt.h"
 #include "telemetry.h"
 #include "drivers/hd44780/hd44780.h"
 #include "drivers/uart_debug.h"
@@ -16,7 +13,7 @@
 
 #define UI_LCD_COLS        20U
 #define UI_LCD_ROWS        4U
-#define UI_PAGE_COUNT      5U
+#define UI_PAGE_COUNT      3U
 #define UI_LOCAL_STATE_RUN  1U
 #define UI_LOCAL_STATE_STOP 0U
 
@@ -152,8 +149,7 @@ static void set_health_leds(void)
     uint8_t load_ui_ok = 1U;
     uint8_t turbine_ok = 1U;
 
-    if ((battery_charger_get_state() == BATTERY_CHARGER_FAULT) ||
-        (mppt_get_state() == MPPT_STATE_FAULT)) {
+    if (battery_charger_get_state() == BATTERY_CHARGER_FAULT) {
         load_ui_ok = 0U;
     }
 
@@ -244,8 +240,6 @@ static void draw_lcd(void)
             lcd_begin_line(3U);
             lcd_print_string_limited("Chg:");
             lcd_print_string_limited(battery_charger_state_to_string(battery_charger_get_state()));
-            lcd_print_string_limited(" M:");
-            lcd_print_string_limited(mppt_state_to_string(mppt_get_state()));
             lcd_finish_line();
             break;
 
@@ -300,56 +294,7 @@ static void draw_lcd(void)
             lcd_finish_line();
             break;
 
-        case 3:
-            lcd_begin_line(0U);
-            lcd_print_string_limited("MPPT / RECTIFIER");
-            lcd_finish_line();
-
-            lcd_begin_line(1U);
-            lcd_print_string_limited("Vrect ");
-            lcd_print_fixed(telemetry->rectifier.bus_voltage, 2U);
-            lcd_print_string_limited(" I");
-            lcd_print_fixed(telemetry->rectifier.current, 2U);
-            lcd_finish_line();
-
-            lcd_begin_line(2U);
-            lcd_print_string_limited("Prect ");
-            lcd_print_fixed(telemetry->rectifier.power, 2U);
-            lcd_print_string_limited("W M");
-            lcd_print_fixed(load_supervisor_get_power_margin_w(), 2U);
-            lcd_finish_line();
-
-            lcd_begin_line(3U);
-            lcd_print_string_limited(mppt_state_to_string(mppt_get_state()));
-            lcd_print_string_limited(" A:");
-            lcd_print_u32(load_supervisor_is_mppt_allowed());
-            lcd_print_string_limited(" Dump:");
-            lcd_print_string_limited(dump_load_state_to_string(dump_load_get_state()));
-            lcd_finish_line();
-            break;
-
-        case 4:
         default:
-            lcd_begin_line(0U);
-            lcd_print_string_limited("SYSTEM");
-            lcd_finish_line();
-
-            lcd_begin_line(1U);
-            lcd_print_string_limited("Mode:");
-            lcd_print_string_limited(system_running ? "START" : "STOP");
-            lcd_print_string_limited(" Rec:");
-            lcd_print_string_limited(record_enabled ? "ON" : "OFF");
-            lcd_finish_line();
-
-            lcd_begin_line(2U);
-            lcd_print_string_limited("BatConv:");
-            lcd_print_string_limited(converter_mode_to_string(converter_get_mode(CONVERTER_CHANNEL_BATTERY)));
-            lcd_finish_line();
-
-            lcd_begin_line(3U);
-            lcd_print_string_limited("MpptConv:");
-            lcd_print_string_limited(converter_mode_to_string(converter_get_mode(CONVERTER_CHANNEL_MPPT)));
-            lcd_finish_line();
             break;
     }
 #else
@@ -414,10 +359,9 @@ void ui_update(void)
     set_health_leds();
 
     const telemetry_snapshot_t *telemetry = telemetry_get_snapshot();
-    float mppt_input_power = telemetry->rectifier.bus_voltage * telemetry->rectifier.current;
 
     uart_printf(
-        "State=%s | Run=%u | Rec=%u | BatMode=%s | Vbat=%.3f | Ibat=%.6f | BatPot=%u | BatDuty=%.3f | MpptMode=%s | MpptState=%s | MpptPot=%u | MpptDuty=%.3f | MpptAllowed=%u | PMargin=%.3f | Pin=%.3f | LoadRelay=%s | DumpLoad=%s | Vrect=%.3f | Irect=%.3f | Wind=%.3f | RPM=%.3f | TState=%u | TCrit=%u\r\n",
+        "State=%s | Run=%u | Rec=%u | BatMode=%s | Vbat=%.3f | Ibat=%.6f | BatPot=%u | BatDuty=%.3f | LoadRelay=%s | Wind=%.3f | RPM=%.3f | TState=%u | TCrit=%u\r\n",
         battery_charger_state_to_string(battery_charger_get_state()),
         system_running,
         record_enabled,
@@ -426,17 +370,7 @@ void ui_update(void)
         telemetry->battery.current,
         converter_get_pot_code(CONVERTER_CHANNEL_BATTERY),
         converter_get_duty(CONVERTER_CHANNEL_BATTERY),
-        converter_mode_to_string(converter_get_mode(CONVERTER_CHANNEL_MPPT)),
-        mppt_state_to_string(mppt_get_state()),
-        converter_get_pot_code(CONVERTER_CHANNEL_MPPT),
-        converter_get_duty(CONVERTER_CHANNEL_MPPT),
-        load_supervisor_is_mppt_allowed(),
-        load_supervisor_get_power_margin_w(),
-        mppt_input_power,
         load_relay_state_to_string(load_relay_get_state()),
-        dump_load_state_to_string(dump_load_get_state()),
-        telemetry->rectifier.bus_voltage,
-        telemetry->rectifier.current,
         telemetry->turbine_wind_speed_m_s,
         telemetry->turbine_rpm,
         telemetry->turbine_state,
