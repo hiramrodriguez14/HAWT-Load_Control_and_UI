@@ -13,31 +13,19 @@ typedef enum {
 } converter_mode_t;
 
 #define BATTERY_CONVERTER       CONVERTER_MODE_PWM_VALUE
-#define MPPT_CONVERTER          CONVERTER_MODE_MCP45HV51_VALUE
-#define MPPT_CONVETER           MPPT_CONVERTER
 
 /*
- * These defines select the control method for each logical converter.
- * Current hardware support assumes one MCP45HV51-controlled converter and
- * one direct-PWM converter. Do not assign both app channels to the same
- * control method unless converter.c is extended with a second hardware path.
+ * Select the battery charger control method here:
+ *   CONVERTER_MODE_PWM_VALUE       -> direct PWM control
+ *   CONVERTER_MODE_MCP45HV51_VALUE -> MCP45HV51 digital potentiometer control
  */
 
 #if ((BATTERY_CONVERTER != CONVERTER_MODE_PWM_VALUE) && (BATTERY_CONVERTER != CONVERTER_MODE_MCP45HV51_VALUE))
 #error "BATTERY_CONVERTER must be CONVERTER_MODE_PWM_VALUE or CONVERTER_MODE_MCP45HV51_VALUE"
 #endif
 
-#if ((MPPT_CONVERTER != CONVERTER_MODE_PWM_VALUE) && (MPPT_CONVERTER != CONVERTER_MODE_MCP45HV51_VALUE))
-#error "MPPT_CONVERTER must be CONVERTER_MODE_PWM_VALUE or CONVERTER_MODE_MCP45HV51_VALUE"
-#endif
-
-#if (BATTERY_CONVERTER == MPPT_CONVERTER)
-#error "BATTERY_CONVERTER and MPPT_CONVERTER must map to different hardware paths with the current converter.c"
-#endif
-
 typedef enum {
     CONVERTER_CHANNEL_BATTERY,
-    CONVERTER_CHANNEL_MPPT,
     CONVERTER_CHANNEL_COUNT
 } converter_channel_t;
 

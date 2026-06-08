@@ -23,11 +23,6 @@ static converter_state_t converters[CONVERTER_CHANNEL_COUNT] = {
         .mode = BATTERY_CONVERTER,
         .duty = 0.30f,
         .last_pot_code = 0xFFU
-    },
-    [CONVERTER_CHANNEL_MPPT] = {
-        .mode = MPPT_CONVERTER,
-        .duty = 0.30f,
-        .last_pot_code = 0xFFU
     }
 };
 
@@ -69,16 +64,8 @@ static void update_pwm_from_value(converter_channel_t channel, float value)
         cmp = pwm_period;
     }
 
-    switch (channel) {
-        case CONVERTER_CHANNEL_MPPT:
-            DL_Timer_setCaptureCompareValue(PWM_0_INST, cmp, GPIO_PWM_0_C0_IDX);
-            break;
-
-        case CONVERTER_CHANNEL_BATTERY:
-        default:
-            DL_Timer_setCaptureCompareValue(PWM_0_INST, cmp, GPIO_PWM_0_C0_IDX);
-            break;
-    }
+    (void)channel;
+    DL_Timer_setCaptureCompareValue(PWM_0_INST, cmp, GPIO_PWM_0_C0_IDX);
 }
 
 static bool pot_step_ready(converter_state_t *converter)
@@ -95,10 +82,8 @@ static bool pot_step_ready(converter_state_t *converter)
 void converter_init(void)
 {
     update_pwm_from_value(CONVERTER_CHANNEL_BATTERY, 0.0f);
-    update_pwm_from_value(CONVERTER_CHANNEL_MPPT, 0.0f);
 
-    if (((converter_mode_t)BATTERY_CONVERTER != CONVERTER_MODE_MCP45HV51) &&
-        ((converter_mode_t)MPPT_CONVERTER != CONVERTER_MODE_MCP45HV51)) {
+    if ((converter_mode_t)BATTERY_CONVERTER != CONVERTER_MODE_MCP45HV51) {
         return;
     }
 
@@ -108,23 +93,8 @@ void converter_init(void)
         }
     }
 
-    MCP45HV51_setRheostatAW_Ohms(0);
-    delay_cycles(32000000U);
-    MCP45HV51_setRheostatAW_Ohms(2500);
-    delay_cycles(32000000U);
-    MCP45HV51_setRheostatAW_Ohms(5000);
-    delay_cycles(32000000U);
-    MCP45HV51_setRheostatAW_Ohms(7500);
-    delay_cycles(32000000U);
-    MCP45HV51_setRheostatAW_Ohms(10000);
-    
-    
     if (converters[CONVERTER_CHANNEL_BATTERY].mode == CONVERTER_MODE_MCP45HV51) {
         converters[CONVERTER_CHANNEL_BATTERY].last_pot_code = output_to_pot_code(0.30f);
-    }
-
-    if (converters[CONVERTER_CHANNEL_MPPT].mode == CONVERTER_MODE_MCP45HV51) {
-        converters[CONVERTER_CHANNEL_MPPT].last_pot_code = output_to_pot_code(0.30f);
     }
 
     if (!MCP45HV51_setWiperRaw(output_to_pot_code(0.30f))) {
