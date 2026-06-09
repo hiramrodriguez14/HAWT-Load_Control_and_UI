@@ -2,6 +2,7 @@
 
 #include "battery_charger.h"
 #include "converter.h"
+#include "dump_load.h"
 #include "load_relay.h"
 #include "telemetry.h"
 #include "drivers/hd44780/hd44780.h"
@@ -220,6 +221,8 @@ static void draw_lcd(void)
             lcd_print_string_limited(system_running ? "RUN " : "STOP ");
             lcd_print_string_limited("REC:");
             lcd_print_string_limited(record_enabled ? "ON " : "OFF ");
+            lcd_print_string_limited("DMP:");
+            lcd_print_string_limited(dump_load_state_to_string(dump_load_get_state()));
             lcd_finish_line();
 
             lcd_begin_line(1U);
@@ -251,7 +254,9 @@ static void draw_lcd(void)
             lcd_begin_line(1U);
             lcd_print_string_limited("Vbat ");
             lcd_print_fixed(telemetry->battery.filtered_bus_voltage, 3U);
-            lcd_print_char_limited('V');
+            lcd_print_string_limited("V D");
+            lcd_print_fixed(converter_get_duty(CONVERTER_CHANNEL_BATTERY) * 100.0f, 0U);
+            lcd_print_char_limited('%');
             lcd_finish_line();
 
             lcd_begin_line(2U);
@@ -358,6 +363,12 @@ void ui_task(void)
 
     if (consume_event(&start_stop_event)) {
         system_running = system_running ? 0U : 1U;
+        if (!system_running) {
+            converter_disable(CONVERTER_CHANNEL_BATTERY);
+            load_relay_disable();
+            dump_load_enable();
+            uart_turbine_send_condition(true);
+        }
         set_status_leds();
         //send_turbine_control(); for now
         lcd_dirty = 1U;

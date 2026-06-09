@@ -3,12 +3,14 @@
 #include "ti_msp_dl_config.h"
 #include "App/battery_charger.h"
 #include "App/converter.h"
+#include "App/dump_load.h"
 #include "App/load_relay.h"
 #include "App/telemetry.h"
 #include "App/ui.h"
 #include "drivers/uart_debug.h"
 #include "drivers/turbine_uart.h"
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #define UNHANDLED_INTERRUPT()                                                  \
@@ -19,8 +21,12 @@
         }                                                                      \
     } while (0)
 
+#define RECTIFIER_DUMP_LOAD_VOLTAGE_V 14.0f
+#define RECTIFIER_CONVERTER_ENABLE_V  3.0f
+
 static volatile uint8_t time_to_update_converters;
 static volatile uint8_t time_to_uart;
+static uint8_t last_record_enabled;
 
 static uint8_t consume_u8_flag(volatile uint8_t *flag)
 {
@@ -63,9 +69,14 @@ void app_init(void)
 
     // turbine_uart_init();
     load_relay_init();
+    dump_load_init();
     converter_init();
     battery_charger_init();
     ui_init();
+    converter_disable(CONVERTER_CHANNEL_BATTERY);
+    load_relay_disable();
+    dump_load_enable();
+    uart_turbine_send_condition(true);
 
     if (!telemetry_init()) {
         uart_printf("Telemetry init failed\r\n");
@@ -85,6 +96,7 @@ void app_run(void)
 
             telemetry_update_turbine(global_rx_packet.wind_speed_m_s,
                                      global_rx_packet.hall_effect_rpm,
+                                     global_rx_packet.blade_deg,
                                      global_rx_packet.state,
                                     //  global_rx_packet.critical_condition,
                                     //  global_rx_packet.timestamp_valid,
@@ -100,21 +112,68 @@ void app_run(void)
         
 
         if (consume_u8_flag(&time_to_uart)) {
+            uint8_t record_enabled;
+
             ui_update();
-            if (ui_is_record_enabled()) {
+
+            record_enabled = ui_is_record_enabled();
+            if (record_enabled && !last_record_enabled) {
+                if (!telemetry_log_begin_recording()) {
+                    uart_printf("Telemetry log start failed\r\n");
+                }
+            } else if (!record_enabled && last_record_enabled) {
+                telemetry_log_end_recording();
+            }
+
+            if (record_enabled) {
                 telemetry_log_snapshot();
             }
+
+            last_record_enabled = record_enabled;
         }
 
         if (consume_u8_flag(&time_to_update_converters)) {
             if (telemetry_sample_battery_control()) {
+                bool supervisor_sample_ok = telemetry_sample_power_supervisor();
                 const telemetry_snapshot_t *telemetry = telemetry_get_snapshot();
+                bool rectifier_over_voltage = supervisor_sample_ok &&
+                    (telemetry->rectifier.bus_voltage > RECTIFIER_DUMP_LOAD_VOLTAGE_V);
+                bool rectifier_converter_available = supervisor_sample_ok &&
+                    (telemetry->rectifier.bus_voltage >= RECTIFIER_CONVERTER_ENABLE_V);
+                bool load_critical_condition = rectifier_over_voltage;
+                bool turbine_safety_state = telemetry->turbine_packet_valid &&
+                    (telemetry->turbine_state == TURBINE_STATE_SAFETY);
+                bool turbine_fault_active = load_critical_condition || turbine_safety_state;
 
-                battery_charger_update(telemetry->battery.filtered_bus_voltage,
-                                       telemetry->battery.current);
-                load_relay_update(telemetry->battery.filtered_bus_voltage);
+                telemetry_set_turbine_critical_condition(load_critical_condition);
+
+                if (ui_is_system_running()) {
+                    if (rectifier_over_voltage || turbine_fault_active) {
+                        dump_load_enable();
+                    } else {
+                        dump_load_disable();
+                    }
+
+                    uart_turbine_send_condition(load_critical_condition);
+                    if (rectifier_converter_available && !turbine_fault_active) {
+                        battery_charger_update(telemetry->battery.filtered_bus_voltage,
+                                               telemetry->battery.current);
+                    } else {
+                        converter_disable(CONVERTER_CHANNEL_BATTERY);
+                    }
+
+                    if (turbine_fault_active) {
+                        load_relay_disable();
+                    } else {
+                        load_relay_update(telemetry->battery.filtered_bus_voltage);
+                    }
+                } else {
+                    converter_disable(CONVERTER_CHANNEL_BATTERY);
+                    load_relay_disable();
+                    dump_load_enable();
+                    uart_turbine_send_condition(true);
+                }
             }
-            (void)telemetry_sample_power_supervisor();
         }
 
         __WFI();
@@ -164,17 +223,3 @@ void CONVERTERS_TIMER_INST_IRQHandler(void)
             break;
     }
 }
-
-#if defined(TURBINE_UART_INST)
-void TURBINE_UART_INST_IRQHandler(void)
-{
-    switch (DL_UART_Main_getPendingInterrupt(TURBINE_UART_INST)) {
-        case DL_UART_MAIN_IIDX_RX:
-            turbine_uart_on_rx_byte(DL_UART_Main_receiveData(TURBINE_UART_INST));
-            break;
-
-        default:
-            break;
-    }
-}
-#endif

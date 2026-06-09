@@ -3,13 +3,17 @@
 #include "ti_msp_dl_config.h"
 #include "drivers/ina229/ina229.h"
 #include "drivers/sd_card/ff.h"
+#include "drivers/sd_card/diskio.h"
 #include "drivers/uart_debug.h"
 
 #include <stdio.h>
 #include <string.h>
 
 #define VBAT_FILTER_ALPHA 0.1f
-#define TELEMETRY_LOG_FILE "TLOG.CSV"
+/* FatFs has long filenames disabled, so keep generated names in 8.3 format. */
+#define TELEMETRY_LOG_BASE_NAME "TLOG"
+#define TELEMETRY_LOG_MAX_FILES 10000U
+#define TELEMETRY_LOG_DRIVE 0U
 
 static ina229_t ina_bat = {
     .spi_inst = INA229_BATTERY_SPI1_INST,
@@ -38,6 +42,7 @@ static FIL log_file;
 static bool log_mounted;
 static bool log_open;
 static uint32_t log_sample_count;
+static char log_file_name[13];
 
 static const int16_t shunt_under_voltage = (int16_t)0x8000;
 static const int16_t shunt_over_voltage = 0x7FFF;
@@ -159,29 +164,84 @@ static bool telemetry_log_write(const char *text)
     return bytes_written == length;
 }
 
-static bool telemetry_log_open(void)
+static bool telemetry_log_mount(void)
 {
     if (!log_mounted) {
+        (void)f_mount(0, "", 0);
+
+        if (disk_initialize(TELEMETRY_LOG_DRIVE) & STA_NOINIT) {
+            return false;
+        }
+
         if (f_mount(&log_fs, "", 1) != FR_OK) {
             return false;
         }
         log_mounted = true;
     }
 
-    if (!log_open) {
-        if (f_open(&log_file, TELEMETRY_LOG_FILE, FA_OPEN_ALWAYS | FA_WRITE) != FR_OK) {
-            return false;
-        }
+    return true;
+}
 
-        if (f_lseek(&log_file, f_size(&log_file)) != FR_OK) {
-            f_close(&log_file);
-            return false;
-        }
+static void telemetry_log_format_file_name(uint32_t index)
+{
+    snprintf(log_file_name,
+             sizeof(log_file_name),
+             "%.4s%04lu.CSV",
+             TELEMETRY_LOG_BASE_NAME,
+             (unsigned long)index);
+}
 
-        log_open = true;
+bool telemetry_log_begin_recording(void)
+{
+    if (log_open) {
+        return true;
     }
 
-    return true;
+    if (!telemetry_log_mount()) {
+        return false;
+    }
+
+    for (uint32_t index = 0U; index < TELEMETRY_LOG_MAX_FILES; index++) {
+        FRESULT result;
+
+        telemetry_log_format_file_name(index);
+
+        result = f_open(&log_file, log_file_name, FA_CREATE_NEW | FA_WRITE);
+        if (result == FR_OK) {
+            log_open = true;
+            log_sample_count = 0U;
+            if (telemetry_log_header()) {
+                return true;
+            }
+
+            telemetry_log_end_recording();
+            return false;
+        }
+
+        if (result != FR_EXIST) {
+            log_file_name[0] = '\0';
+            telemetry_log_end_recording();
+            return false;
+        }
+    }
+
+    log_file_name[0] = '\0';
+    telemetry_log_end_recording();
+    return false;
+}
+
+void telemetry_log_end_recording(void)
+{
+    if (log_open) {
+        (void)f_sync(&log_file);
+        (void)f_close(&log_file);
+        log_open = false;
+    }
+
+    if (log_mounted) {
+        (void)f_mount(0, "", 0);
+        log_mounted = false;
+    }
 }
 
 static void format_calendar_time(char *buffer,
@@ -304,7 +364,7 @@ bool telemetry_sample_power_supervisor(void)
 
 bool telemetry_log_header(void)
 {
-    if (!telemetry_log_open()) {
+    if (!log_open) {
         return false;
     }
 
@@ -327,7 +387,12 @@ bool telemetry_log_snapshot(void)
     char turbine_time[24];
     int length;
 
+    if (!log_open && !telemetry_log_begin_recording()) {
+        return false;
+    }
+
     if (!telemetry_log_header()) {
+        telemetry_log_end_recording();
         return false;
     }
 
@@ -377,14 +442,21 @@ bool telemetry_log_snapshot(void)
                       snapshot.turbine_packet_valid ? 1U : 0U);
 
     if ((length <= 0) || ((size_t)length >= sizeof(line))) {
+        telemetry_log_end_recording();
         return false;
     }
 
     if (!telemetry_log_write(line)) {
+        telemetry_log_end_recording();
         return false;
     }
 
-    return f_sync(&log_file) == FR_OK;
+    if (f_sync(&log_file) != FR_OK) {
+        telemetry_log_end_recording();
+        return false;
+    }
+
+    return true;
 }
 
 const telemetry_snapshot_t *telemetry_get_snapshot(void)
@@ -394,9 +466,8 @@ const telemetry_snapshot_t *telemetry_get_snapshot(void)
 
 void telemetry_update_turbine(float wind_speed_m_s,
                               float rpm,
+                              float degree,
                               uint8_t state,
-                            //   bool critical_condition,
-                            //   bool timestamp_valid,
                               uint16_t year,
                               uint8_t month,
                               uint8_t day,
@@ -406,16 +477,21 @@ void telemetry_update_turbine(float wind_speed_m_s,
 {
     snapshot.turbine_wind_speed_m_s = wind_speed_m_s;
     snapshot.turbine_rpm = rpm;
+    snapshot.turbine_degree = degree;
     snapshot.turbine_state = state;
-    // snapshot.turbine_critical_condition = critical_condition;
-    // snapshot.turbine_timestamp_valid = timestamp_valid;
     snapshot.turbine_year = year;
     snapshot.turbine_month = month;
     snapshot.turbine_day = day;
     snapshot.turbine_hour = hour;
     snapshot.turbine_minute = minute;
     snapshot.turbine_second = second;
+    snapshot.turbine_timestamp_valid = true;
     snapshot.turbine_packet_valid = true;
+}
+
+void telemetry_set_turbine_critical_condition(bool critical_condition)
+{
+    snapshot.turbine_critical_condition = critical_condition;
 }
 
 void telemetry_set_battery_alert_flag(void)

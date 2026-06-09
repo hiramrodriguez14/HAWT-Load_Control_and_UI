@@ -16,9 +16,16 @@
 
 static battery_charger_state_t state;
 
+static float abs_current(float current)
+{
+    return (current < 0.0f) ? -current : current;
+}
+
 static void update_state(float vbat, float ibat)
 {
-    if ((vbat > MAX_BAT_VOLTAGE_V) || (ibat > MAX_CURRENT_A)) {
+    float charge_current = abs_current(ibat);
+
+    if ((vbat > MAX_BAT_VOLTAGE_V) || (charge_current > MAX_CURRENT_A)) {
         state = BATTERY_CHARGER_FAULT;
         converter_disable(CONVERTER_CHANNEL_BATTERY);
         return;
@@ -32,7 +39,7 @@ static void update_state(float vbat, float ibat)
             break;
 
         case BATTERY_CHARGER_ABSORPTION:
-            if ((ibat <= ABS_EXIT_CURRENT_A) && (vbat >= ABS_VOLTAGE_V)) {
+            if ((charge_current <= ABS_EXIT_CURRENT_A) && (vbat >= ABS_VOLTAGE_V)) {
                 state = BATTERY_CHARGER_FLOAT;
             }
             break;
@@ -45,7 +52,7 @@ static void update_state(float vbat, float ibat)
 
         case BATTERY_CHARGER_FAULT:
             converter_disable(CONVERTER_CHANNEL_BATTERY);
-            if ((vbat < ABS_VOLTAGE_V) && (ibat < BULK_CURRENT_A)) {
+            if ((vbat < ABS_VOLTAGE_V) && (charge_current < BULK_CURRENT_A)) {
                 state = BATTERY_CHARGER_BULK;
             }
             break;
@@ -59,6 +66,7 @@ void battery_charger_init(void)
 
 void battery_charger_update(float vbat, float ibat)
 {
+    float charge_current = abs_current(ibat);
     float vref = ABS_VOLTAGE_V;
 
     update_state(vbat, ibat);
@@ -66,9 +74,9 @@ void battery_charger_update(float vbat, float ibat)
     switch (state) {
         case BATTERY_CHARGER_BULK:
             vref = ABS_VOLTAGE_V;
-            if (ibat < BULK_CURRENT_A) {
+            if (charge_current < BULK_CURRENT_A) {
                 converter_increase_output(CONVERTER_CHANNEL_BATTERY);
-            } else if (ibat > (BULK_CURRENT_A + CURRENT_DEADBAND_A)) {
+            } else if (charge_current > (BULK_CURRENT_A + CURRENT_DEADBAND_A)) {
                 converter_decrease_output(CONVERTER_CHANNEL_BATTERY);
             }
             break;

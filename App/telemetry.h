@@ -23,6 +23,7 @@ typedef struct {
     telemetry_channel_t rectifier;
     float turbine_wind_speed_m_s;
     float turbine_rpm;
+    float turbine_degree;
     uint8_t turbine_state;
     bool turbine_critical_condition;
     bool turbine_packet_valid;
@@ -39,11 +40,14 @@ bool telemetry_init(void);
 void telemetry_process_alerts(void);
 bool telemetry_sample_battery_control(void);
 bool telemetry_sample_power_supervisor(void);
+bool telemetry_log_begin_recording(void);
+void telemetry_log_end_recording(void);
 bool telemetry_log_header(void);
 bool telemetry_log_snapshot(void);
 const telemetry_snapshot_t *telemetry_get_snapshot(void);
 void telemetry_update_turbine(float wind_speed_m_s,
                               float rpm,
+                              float degree,
                               uint8_t state,
                               uint16_t year,
                               uint8_t month,
@@ -51,6 +55,7 @@ void telemetry_update_turbine(float wind_speed_m_s,
                               uint8_t hour,
                               uint8_t minute,
                               uint8_t second);
+void telemetry_set_turbine_critical_condition(bool critical_condition);
 void telemetry_set_battery_alert_flag(void);
 void telemetry_set_rectifier_alert_flag(void);
 

@@ -1,6 +1,10 @@
 #ifndef TURBINE_UART_H_
 #define TURBINE_UART_H_
 
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "ti_msp_dl_config.h"
 
 typedef enum {
   TURBINE_STATE_INIT,
@@ -75,5 +79,6 @@ typedef struct __attribute__((packed)) {
 extern TelemetryPacket global_rx_packet;
 extern volatile bool global_rx_packet_ready;
 
+void uart_turbine_send_condition(bool critical);
 
 #endif /* TURBINE_UART_H_ */
