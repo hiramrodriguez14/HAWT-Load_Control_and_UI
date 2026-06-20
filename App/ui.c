@@ -394,22 +394,27 @@ void ui_update(void)
 
     const telemetry_snapshot_t *telemetry = telemetry_get_snapshot();
 
-    uart_printf(
-        "State=%s | Run=%u | Rec=%u | BatMode=%s | Vbat=%.3f | Ibat=%.6f | BatPot=%u | BatDuty=%.3f | LoadRelay=%s | Wind=%.3f | RPM=%.3f | TState=%u | TCrit=%u\r\n",
+    uart_printf("SYS | State=%s | Run=%u | Rec=%u | LoadRelay=%s\r\n",
         battery_charger_state_to_string(battery_charger_get_state()),
         system_running,
         record_enabled,
+        load_relay_state_to_string(load_relay_get_state()));
+
+    uart_printf(
+        "BAT | Mode=%s | V=%.3f | I=%.6f | Pot=%u | Duty=%.3f\r\n",
         converter_mode_to_string(converter_get_mode(CONVERTER_CHANNEL_BATTERY)),
         telemetry->battery.filtered_bus_voltage,
         telemetry->battery.current,
         converter_get_pot_code(CONVERTER_CHANNEL_BATTERY),
-        converter_get_duty(CONVERTER_CHANNEL_BATTERY),
-        load_relay_state_to_string(load_relay_get_state()),
+        converter_get_duty(CONVERTER_CHANNEL_BATTERY));
+
+    uart_printf("TUR | Wind=%.3f | RPM=%.3f | State=%u | Crit=%u\r\n",
         telemetry->turbine_wind_speed_m_s,
         telemetry->turbine_rpm,
         telemetry->turbine_state,
         telemetry->turbine_critical_condition ? 1U : 0U);
 }
+
 
 void ui_handle_gpio_interrupt(uint32_t gpioa_iidx, uint32_t gpiob_iidx)
 {

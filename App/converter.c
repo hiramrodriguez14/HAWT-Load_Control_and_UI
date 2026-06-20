@@ -4,7 +4,7 @@
 #include "drivers/MCP45HV51/mcp45hv51.h"
 #include "drivers/uart_debug.h"
 
-#define DUTY_STEP               0.0005f
+#define DUTY_STEP               0.005f
 #define OUTPUT_MIN              0.05f
 #define OUTPUT_MAX              0.99f
 #define SAFE_OFF_POT_CODE       255U
@@ -169,6 +169,23 @@ void converter_apply(converter_channel_t channel, bool fault_active)
         update_pwm_from_value(channel, converter->duty);
     } else {
         converter->duty = 0.0f;
+    }
+}
+
+void converter_suspend_output(converter_channel_t channel)
+{
+    converter_state_t *converter = get_converter(channel);
+
+    if (converter->mode == CONVERTER_MODE_PWM) {
+        update_pwm_from_value(channel, 0.0f);
+    }
+
+    if (converter->mode == CONVERTER_MODE_MCP45HV51) {
+        if (converter->last_pot_code != SAFE_OFF_POT_CODE) {
+            if (!MCP45HV51_setWiperRaw(SAFE_OFF_POT_CODE)) {
+                uart_printf("MCP45HV51 safe-off write failed\r\n");
+            }
+        }
     }
 }
 

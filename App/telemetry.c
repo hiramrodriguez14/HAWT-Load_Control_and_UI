@@ -9,6 +9,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#if defined(RTC_B_BASE)
+#define TELEMETRY_RTC_INST ((RTC_Regs *)RTC_B_BASE)
+#elif defined(RTC_BASE)
+#define TELEMETRY_RTC_INST ((RTC_Regs *)RTC_BASE)
+#endif
 #define VBAT_FILTER_ALPHA 0.1f
 /* FatFs has long filenames disabled, so keep generated names in 8.3 format. */
 #define TELEMETRY_LOG_BASE_NAME "TLOG"
@@ -396,8 +401,9 @@ bool telemetry_log_snapshot(void)
         return false;
     }
 
-#if defined(RTC)
-    DL_RTC_Common_Calendar calendar = DL_RTC_Common_getCalendarTime(RTC);
+#if defined(TELEMETRY_RTC_INST)
+    DL_RTC_Common_Calendar calendar =
+        DL_RTC_Common_getCalendarTime(TELEMETRY_RTC_INST);
     format_calendar_time(local_time,
                          sizeof(local_time),
                          (uint16_t)calendar.year,
@@ -406,6 +412,13 @@ bool telemetry_log_snapshot(void)
                          (uint8_t)calendar.hours,
                          (uint8_t)calendar.minutes,
                          (uint8_t)calendar.seconds);
+            uart_printf("LOCAL RTC: %04u-%02u-%02u %02u:%02u:%02u\r\n",
+            (unsigned int)calendar.year,
+            (unsigned int)calendar.month,
+            (unsigned int)calendar.dayOfMonth,
+            (unsigned int)calendar.hours,
+            (unsigned int)calendar.minutes,
+            (unsigned int)calendar.seconds);
 #else
     local_time[0] = '\0';
 #endif

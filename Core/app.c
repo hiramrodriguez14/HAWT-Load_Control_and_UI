@@ -21,12 +21,14 @@
         }                                                                      \
     } while (0)
 
-#define RECTIFIER_DUMP_LOAD_VOLTAGE_V 14.0f
+#define RECTIFIER_OVERVOLTAGE_ON_V   14.0f
+#define RECTIFIER_OVERVOLTAGE_OFF_V  13.5f
 #define RECTIFIER_CONVERTER_ENABLE_V  3.0f
 
 static volatile uint8_t time_to_update_converters;
 static volatile uint8_t time_to_uart;
 static uint8_t last_record_enabled;
+static bool rectifier_over_voltage_latched;
 
 static uint8_t consume_u8_flag(volatile uint8_t *flag)
 {
@@ -38,6 +40,19 @@ static uint8_t consume_u8_flag(volatile uint8_t *flag)
     __enable_irq();
 
     return local;
+}
+
+static bool update_rectifier_over_voltage(float rectifier_voltage)
+{
+    if (rectifier_over_voltage_latched) {
+        if (rectifier_voltage < RECTIFIER_OVERVOLTAGE_OFF_V) {
+            rectifier_over_voltage_latched = false;
+        }
+    } else if (rectifier_voltage > RECTIFIER_OVERVOLTAGE_ON_V) {
+        rectifier_over_voltage_latched = true;
+    }
+
+    return rectifier_over_voltage_latched;
 }
 
 void app_init(void)
@@ -77,6 +92,7 @@ void app_init(void)
     load_relay_disable();
     dump_load_enable();
     uart_turbine_send_condition(true);
+    rectifier_over_voltage_latched = false;
 
     if (!telemetry_init()) {
         uart_printf("Telemetry init failed\r\n");
@@ -137,7 +153,7 @@ void app_run(void)
                 bool supervisor_sample_ok = telemetry_sample_power_supervisor();
                 const telemetry_snapshot_t *telemetry = telemetry_get_snapshot();
                 bool rectifier_over_voltage = supervisor_sample_ok &&
-                    (telemetry->rectifier.bus_voltage > RECTIFIER_DUMP_LOAD_VOLTAGE_V);
+                    update_rectifier_over_voltage(telemetry->rectifier.bus_voltage);
                 bool rectifier_converter_available = supervisor_sample_ok &&
                     (telemetry->rectifier.bus_voltage >= RECTIFIER_CONVERTER_ENABLE_V);
                 bool load_critical_condition = rectifier_over_voltage;
@@ -159,7 +175,7 @@ void app_run(void)
                         battery_charger_update(telemetry->battery.filtered_bus_voltage,
                                                telemetry->battery.current);
                     } else {
-                        converter_disable(CONVERTER_CHANNEL_BATTERY);
+                        converter_suspend_output(CONVERTER_CHANNEL_BATTERY);
                     }
 
                     if (turbine_fault_active) {

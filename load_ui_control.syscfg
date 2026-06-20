@@ -218,11 +218,6 @@ PWM1.PWM_CHANNEL_0.dutyCycle    = 30;
 PWM1.ccp0PinConfig.$name        = "ti_driverlib_gpio_GPIOPinGeneric5";
 PWM1.peripheral.ccp0Pin.$assign = "PB15";
 
-RTCB.calYear     = 2026;
-RTCB.calMonth    = "5";
-RTCB.calDOM      = 4;
-RTCB.calDOW      = "4";
-RTCB.enableClock = true;
 
 SPI1.enableDMAEvent1                    = false;
 SPI1.enableDMAEvent2                    = false;
@@ -309,9 +304,9 @@ TIMER1.peripheral.$assign = "TIMA0";
 TIMER2.timerClkSrc        = "LFCLK";
 TIMER2.timerMode          = "PERIODIC_UP";
 TIMER2.timerStartTimer    = true;
-TIMER2.timerPeriod        = "2 s";
 TIMER2.$name              = "UART_TIMER";
 TIMER2.interrupts         = ["ZERO"];
+TIMER2.timerPeriod        = "50 ms";
 TIMER2.peripheral.$assign = "TIMA1";
 
 UART1.$name                    = "UART_0";

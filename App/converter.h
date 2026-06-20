@@ -34,6 +34,7 @@ void converter_increase_output(converter_channel_t channel);
 void converter_decrease_output(converter_channel_t channel);
 void converter_set_output(converter_channel_t channel, float value);
 void converter_apply(converter_channel_t channel, bool fault_active);
+void converter_suspend_output(converter_channel_t channel);
 void converter_disable(converter_channel_t channel);
 void converter_set_voltage_reference(converter_channel_t channel, float voltage);
 float converter_get_duty(converter_channel_t channel);
