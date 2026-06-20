@@ -4,6 +4,9 @@ Release/
 .settings/
 targetConfigs/
 notes.txt
+sepic.c
+main.c
+test.c
 # ===== Clang / tooling =====
 .clangd
 
