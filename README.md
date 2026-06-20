@@ -1,41 +1,257 @@
-## Example Summary
+# Horizontal Axis Wind Turbine Electronic Control Unit (ECU)
 
-Empty project using DriverLib.
-This example shows a basic empty project using DriverLib with just main file
-and SysConfig initialization.
+## Load Control & User Interface Firmware
 
-## Peripherals & Pin Assignments
+Embedded firmware for the **Load Control & User Interface Microcontroller Unit (MCU)** of the **Horizontal Axis Wind Turbine Electronic Control Unit (ECU)**.
 
-| Peripheral | Pin | Function |
-| --- | --- | --- |
-| SYSCTL |  |  |
-| DEBUGSS | PA20 | Debug Clock |
-| DEBUGSS | PA19 | Debug Data In Out |
+This repository contains the embedded software responsible for electrical power management, battery charging, user interaction, data logging, and system coordination with the Turbine MCU.
 
-## BoosterPacks, Board Resources & Jumper Settings
+---
 
-Visit [LP_MSPM0G3507](https://www.ti.com/tool/LP-MSPM0G3507) for LaunchPad information, including user guide and hardware files.
+# Documentation & Demo
 
-| Pin | Peripheral | Function | LaunchPad Pin | LaunchPad Settings |
-| --- | --- | --- | --- | --- |
-| PA20 | DEBUGSS | SWCLK | N/A | <ul><li>PA20 is used by SWD during debugging<br><ul><li>`J101 15:16 ON` Connect to XDS-110 SWCLK while debugging<br><li>`J101 15:16 OFF` Disconnect from XDS-110 SWCLK if using pin in application</ul></ul> |
-| PA19 | DEBUGSS | SWDIO | N/A | <ul><li>PA19 is used by SWD during debugging<br><ul><li>`J101 13:14 ON` Connect to XDS-110 SWDIO while debugging<br><li>`J101 13:14 OFF` Disconnect from XDS-110 SWDIO if using pin in application</ul></ul> |
+| Resource                 | Link                            |
+| ------------------------ | ------------------------------- |
+| 🎥 Project Demonstration | *(Add YouTube Link)*            |
+| 📄 Final Project Report  | *(Add Final Report Link)*       |
+| 📚 Technical Appendix    | *(Add Technical Appendix Link)* |
 
-### Device Migration Recommendations
-This project was developed for a superset device included in the LP_MSPM0G3507 LaunchPad. Please
-visit the [CCS User's Guide](https://software-dl.ti.com/msp430/esd/MSPM0-SDK/latest/docs/english/tools/ccs_ide_guide/doc_guide/doc_guide-srcs/ccs_ide_guide.html#sysconfig-project-migration)
-for information about migrating to other MSPM0 devices.
+---
 
-### Low-Power Recommendations
-TI recommends to terminate unused pins by setting the corresponding functions to
-GPIO and configure the pins to output low or input with internal
-pullup/pulldown resistor.
+# Overview
 
-SysConfig allows developers to easily configure unused pins by selecting **Board**→**Configure Unused Pins**.
+The Horizontal Axis Wind Turbine Electronic Control Unit (ECU) was developed for the AeroPower research team at the University of Puerto Rico – Mayagüez to provide a complete embedded monitoring and control platform for a laboratory-scale horizontal-axis wind turbine.
 
-For more information about jumper configuration to achieve low-power using the
-MSPM0 LaunchPad, please visit the [LP-MSPM0G3507 User's Guide](https://www.ti.com/lit/slau873).
+The ECU is composed of two independent embedded controllers:
 
-## Example Usage
+* **Turbine MCU**
+* **Load Control & UI MCU** *(this repository)*
 
-Compile, load and run the example.
+The Load Control & UI MCU supervises the complete electrical subsystem, including battery charging, converter regulation, power monitoring, load protection, user interaction, SD card logging, and communication with the Turbine MCU.
+
+Separating mechanical and electrical responsibilities into two microcontrollers improves reliability, simplifies software development, and allows both processors to execute independently in real time.
+
+---
+
+# Engineering Highlights
+
+* Dual-MCU distributed architecture
+* SEPIC converter control
+* Lead-acid battery charging controller
+* Finite State Machine (Bulk, Absorption, Float, Fault)
+* Dual INA229 power monitors
+* LCD user interface
+* Push-button navigation
+* microSD data logging
+* Load relay control
+* Dump load protection
+* UART communication
+* Real-time telemetry
+
+---
+
+# Features
+
+* Battery charging supervision
+* SEPIC converter PWM control
+* Battery voltage and current monitoring
+* Turbine power monitoring
+* Load relay management
+* Critical fault detection
+* LCD menu interface
+* User input through push buttons
+* Status LEDs
+* Real-Time Clock (RTC)
+* Data logging to microSD card
+* Communication with the Turbine MCU
+
+---
+
+# Firmware Architecture
+
+The firmware follows a modular architecture where each subsystem performs a dedicated function while operating as part of the complete wind turbine controller.
+
+Main responsibilities include:
+
+* Monitoring turbine electrical power
+* Monitoring battery voltage and current
+* Controlling the battery charging process
+* Managing converter duty cycle
+* Updating the LCD interface
+* Logging operational data
+* Managing user inputs
+* Coordinating with the Turbine MCU
+
+**Suggested image**
+
+`images/system_overview.png`
+
+*Figure 2 – Top-Level System View*
+
+---
+
+# Battery Charging State Machine
+
+Battery charging is implemented as a Finite State Machine specifically designed for sealed lead-acid batteries.
+
+Charging stages include:
+
+* Initialization
+* Bulk Charge
+* Absorption
+* Hold / Float
+* Fault
+
+The controller continuously evaluates:
+
+* Battery voltage
+* Battery current
+* Turbine power availability
+* Safety conditions
+
+Whenever abnormal operating conditions are detected, the firmware transitions to a protected state and disconnects the load if necessary.
+
+**Suggested image**
+
+`images/load_state_machine.png`
+
+*Figure 6 – Load State Diagram*
+
+---
+
+# User Interface
+
+The user interface provides operators with real-time access to turbine and battery information.
+
+Available functions include:
+
+* System status
+* Battery voltage
+* Charging state
+* Turbine measurements
+* Data logging status
+* Start / Stop control
+* Menu navigation
+
+**Suggested image**
+
+`images/user_interface.png`
+
+*Figure 4 – User Interface Layout*
+
+---
+
+# Data Logging
+
+The firmware supports long-term operational data logging using a microSD card.
+
+Recorded parameters include:
+
+* Wind speed
+* Rotor RPM
+* Turbine voltage
+* Turbine current
+* Battery voltage
+* Battery current
+* Charging state
+* System status
+
+This information enables post-test analysis and supports future improvements to turbine performance and controller design.
+
+---
+
+# Communication
+
+The Load Control & UI MCU exchanges information with the Turbine MCU through a UART interface.
+
+### Received
+
+* Wind speed
+* Rotor RPM
+* Turbine operating state
+* Blade position
+
+### Transmitted
+
+* Critical operating conditions
+* Emergency shutdown requests
+* System synchronization
+* Controller status
+
+This communication enables coordinated control of both the electrical and mechanical subsystems.
+
+**Suggested image**
+
+`images/communication_architecture.png`
+
+*Figure 41 – Communication Flow*
+
+---
+
+# Development Environment
+
+## Hardware
+
+* Texas Instruments MSPM0G3519
+* INA229 Power Monitor (2x)
+* 20×4 LCD
+* Real-Time Clock (RTC)
+* microSD Card Interface
+* Relay Driver
+* Push Buttons
+* Status LEDs
+
+## Software
+
+* C
+* Code Composer Studio (CCS)
+* TI MSPM0 SDK
+* SysConfig
+
+---
+
+# Repository Structure
+
+```text
+HAWT-Load_Control_and_UI
+│
+├── App/                     Application modules
+├── Core/                    Core firmware and system logic
+├── drivers/                 Peripheral and device drivers
+├── .ccsproject              CCS project configuration
+├── .cproject                Eclipse CDT project configuration
+├── .project                 Eclipse project metadata
+├── .gitignore               Git ignored files
+├── load_ui_control.syscfg   TI SysConfig configuration
+├── README.md                Repository documentation
+└── LICENSE                  Project license
+```
+
+---
+
+# Related Repositories
+
+| Repository               | Description                                         |
+| ------------------------ | --------------------------------------------------- |
+| HAWT-TurbineMCU-Firmware | Turbine monitoring and blade pitch control firmware |
+| HAWT-TurbineMCU-PCB      | PCB design for the Turbine MCU                      |
+| HAWT-LoadUI-PCB          | PCB design for the Load Control & UI MCU            |
+
+---
+
+# Authors
+
+* Hiram R. Rodríguez Hernández
+* José M. Burgos Guntín
+* Sergio A. Meléndez Padilla
+* Sergio A. Da Silva López
+
+Department of Electrical & Computer Engineering
+
+University of Puerto Rico – Mayagüez
+
+---
+
+# License
+
+This project was developed for educational and research purposes as part of the Embedded Systems Design course at the University of Puerto Rico – Mayagüez.
