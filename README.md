@@ -13,8 +13,8 @@ This repository contains the embedded software responsible for electrical power 
 | Resource                 | Link                            |
 | ------------------------ | ------------------------------- |
 | 🎥 Project Demonstration | https://www.youtube.com/watch?v=vS5Ok38P1Jk|
-| 📄 Final Project Report  | (https://drive.google.com/file/d/1cckKhvj7mvzCEbm3IqWp0KvrUp9g6mgg/view?usp=sharing)|
-| 📚 Technical Appendix    | (https://drive.google.com/file/d/1xu7MtcffDlpna8_BUkwEc_BfjpQJpUep/view?usp=sharing)|
+| 📄 Final Project Report  | https://drive.google.com/file/d/1cckKhvj7mvzCEbm3IqWp0KvrUp9g6mgg/view?usp=sharing|
+| 📚 Technical Appendix    | https://drive.google.com/file/d/1xu7MtcffDlpna8_BUkwEc_BfjpQJpUep/view?usp=sharing|
 
 ---
 
