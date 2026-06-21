@@ -2,6 +2,10 @@
 
 ## Load Control & User Interface Firmware
 
+<p align="center">
+  <img src="./images/system_overview.png" alt="System Overview" width="900">
+</p>
+
 Embedded firmware for the **Load Control & User Interface Microcontroller Unit (MCU)** of the **Horizontal Axis Wind Turbine Electronic Control Unit (ECU)**.
 
 This repository contains the embedded software responsible for electrical power management, battery charging, user interaction, data logging, and system coordination with the Turbine MCU.
@@ -10,11 +14,11 @@ This repository contains the embedded software responsible for electrical power 
 
 # Documentation & Demo
 
-| Resource                 | Link                            |
-| ------------------------ | ------------------------------- |
-| 🎥 Project Demonstration | https://www.youtube.com/watch?v=vS5Ok38P1Jk|
-| 📄 Final Project Report  | https://drive.google.com/file/d/1cckKhvj7mvzCEbm3IqWp0KvrUp9g6mgg/view?usp=sharing|
-| 📚 Technical Appendix    | https://drive.google.com/file/d/1xu7MtcffDlpna8_BUkwEc_BfjpQJpUep/view?usp=sharing|
+| Resource | Link |
+|----------|------|
+| 🎥 Project Demonstration | https://www.youtube.com/watch?v=vS5Ok38P1Jk |
+| 📄 Final Project Report | https://drive.google.com/file/d/1cckKhvj7mvzCEbm3IqWp0KvrUp9g6mgg/view?usp=sharing |
+| 📚 Technical Appendix | https://drive.google.com/file/d/1xu7MtcffDlpna8_BUkwEc_BfjpQJpUep/view?usp=sharing |
 
 ---
 
@@ -24,8 +28,8 @@ The Horizontal Axis Wind Turbine Electronic Control Unit (ECU) was developed for
 
 The ECU is composed of two independent embedded controllers:
 
-* **Turbine MCU**
-* **Load Control & UI MCU** *(this repository)*
+- **Turbine MCU**
+- **Load Control & UI MCU** *(this repository)*
 
 The Load Control & UI MCU supervises the complete electrical subsystem, including battery charging, converter regulation, power monitoring, load protection, user interaction, SD card logging, and communication with the Turbine MCU.
 
@@ -35,35 +39,35 @@ Separating mechanical and electrical responsibilities into two microcontrollers 
 
 # Engineering Highlights
 
-* Dual-MCU distributed architecture
-* SEPIC converter control
-* Lead-acid battery charging controller
-* Finite State Machine (Bulk, Absorption, Float, Fault)
-* Dual INA229 power monitors
-* LCD user interface
-* Push-button navigation
-* microSD data logging
-* Load relay control
-* Dump load protection
-* UART communication
-* Real-time telemetry
+- Dual-MCU distributed architecture
+- SEPIC converter control
+- Lead-acid battery charging controller
+- Finite State Machine (Bulk, Absorption, Float, Fault)
+- Dual INA229 power monitors
+- LCD user interface
+- Push-button navigation
+- microSD data logging
+- Load relay control
+- Dump load protection
+- UART communication
+- Real-time telemetry
 
 ---
 
 # Features
 
-* Battery charging supervision
-* SEPIC converter PWM control
-* Battery voltage and current monitoring
-* Turbine power monitoring
-* Load relay management
-* Critical fault detection
-* LCD menu interface
-* User input through push buttons
-* Status LEDs
-* Real-Time Clock (RTC)
-* Data logging to microSD card
-* Communication with the Turbine MCU
+- Battery charging supervision
+- SEPIC converter PWM control
+- Battery voltage and current monitoring
+- Turbine power monitoring
+- Load relay management
+- Critical fault detection
+- LCD menu interface
+- User input through push buttons
+- Status LEDs
+- Real-Time Clock (RTC)
+- Data logging to microSD card
+- Communication with the Turbine MCU
 
 ---
 
@@ -73,20 +77,22 @@ The firmware follows a modular architecture where each subsystem performs a dedi
 
 Main responsibilities include:
 
-* Monitoring turbine electrical power
-* Monitoring battery voltage and current
-* Controlling the battery charging process
-* Managing converter duty cycle
-* Updating the LCD interface
-* Logging operational data
-* Managing user inputs
-* Coordinating with the Turbine MCU
+- Monitoring turbine electrical power
+- Monitoring battery voltage and current
+- Controlling the battery charging process
+- Managing converter duty cycle
+- Updating the LCD interface
+- Logging operational data
+- Managing user inputs
+- Coordinating with the Turbine MCU
 
-**Suggested image**
+<p align="center">
+  <img src="./images/system_architecture.png" alt="Firmware Architecture" width="900">
+</p>
 
-`images/system_overview.png`
-
-*Figure 2 – Top-Level System View*
+<p align="center">
+<b>Figure 1.</b> Firmware Architecture
+</p>
 
 ---
 
@@ -96,26 +102,28 @@ Battery charging is implemented as a Finite State Machine specifically designed 
 
 Charging stages include:
 
-* Initialization
-* Bulk Charge
-* Absorption
-* Hold / Float
-* Fault
+- Initialization
+- Bulk Charge
+- Absorption
+- Hold / Float
+- Fault
 
 The controller continuously evaluates:
 
-* Battery voltage
-* Battery current
-* Turbine power availability
-* Safety conditions
+- Battery voltage
+- Battery current
+- Turbine power availability
+- Safety conditions
 
 Whenever abnormal operating conditions are detected, the firmware transitions to a protected state and disconnects the load if necessary.
 
-**Suggested image**
+<p align="center">
+  <img src="./images/battery_std.png" alt="Battery State Diagram" width="650">
+</p>
 
-`images/load_state_machine.png`
-
-*Figure 6 – Load State Diagram*
+<p align="center">
+<b>Figure 2.</b> Battery Charging State Machine
+</p>
 
 ---
 
@@ -125,19 +133,21 @@ The user interface provides operators with real-time access to turbine and batte
 
 Available functions include:
 
-* System status
-* Battery voltage
-* Charging state
-* Turbine measurements
-* Data logging status
-* Start / Stop control
-* Menu navigation
+- System status
+- Battery voltage
+- Charging state
+- Turbine measurements
+- Data logging status
+- Start / Stop control
+- Menu navigation
 
-**Suggested image**
+<p align="center">
+  <img src="./images/user_interface.png" alt="User Interface" width="900">
+</p>
 
-`images/user_interface.png`
-
-*Figure 4 – User Interface Layout*
+<p align="center">
+<b>Figure 3.</b> LCD User Interface
+</p>
 
 ---
 
@@ -147,16 +157,24 @@ The firmware supports long-term operational data logging using a microSD card.
 
 Recorded parameters include:
 
-* Wind speed
-* Rotor RPM
-* Turbine voltage
-* Turbine current
-* Battery voltage
-* Battery current
-* Charging state
-* System status
+- Wind speed
+- Rotor RPM
+- Turbine voltage
+- Turbine current
+- Battery voltage
+- Battery current
+- Charging state
+- System status
 
 This information enables post-test analysis and supports future improvements to turbine performance and controller design.
+
+<p align="center">
+  <img src="./images/loadui_dataflow.png" alt="Data Flow" width="900">
+</p>
+
+<p align="center">
+<b>Figure 4.</b> Internal Data Flow and Logging
+</p>
 
 ---
 
@@ -166,25 +184,27 @@ The Load Control & UI MCU exchanges information with the Turbine MCU through a U
 
 ### Received
 
-* Wind speed
-* Rotor RPM
-* Turbine operating state
-* Blade position
+- Wind speed
+- Rotor RPM
+- Turbine operating state
+- Blade position
 
 ### Transmitted
 
-* Critical operating conditions
-* Emergency shutdown requests
-* System synchronization
-* Controller status
+- Critical operating conditions
+- Emergency shutdown requests
+- System synchronization
+- Controller status
 
 This communication enables coordinated control of both the electrical and mechanical subsystems.
 
-**Suggested image**
+<p align="center">
+  <img src="./images/loadio_datagram.png" alt="UART Communication" width="900">
+</p>
 
-`images/communication_architecture.png`
-
-*Figure 41 – Communication Flow*
+<p align="center">
+<b>Figure 5.</b> UART Communication Protocol
+</p>
 
 ---
 
@@ -192,21 +212,21 @@ This communication enables coordinated control of both the electrical and mechan
 
 ## Hardware
 
-* Texas Instruments MSPM0G3519
-* INA229 Power Monitor (2x)
-* 20×4 LCD
-* Real-Time Clock (RTC)
-* microSD Card Interface
-* Relay Driver
-* Push Buttons
-* Status LEDs
+- Texas Instruments MSPM0G3519
+- INA229 Power Monitor (2×)
+- 20×4 LCD
+- Real-Time Clock (RTC)
+- microSD Card Interface
+- Relay Driver
+- Push Buttons
+- Status LEDs
 
 ## Software
 
-* C
-* Code Composer Studio (CCS)
-* TI MSPM0 SDK
-* SysConfig
+- C
+- Code Composer Studio (CCS)
+- TI MSPM0 SDK
+- SysConfig
 
 ---
 
@@ -215,36 +235,35 @@ This communication enables coordinated control of both the electrical and mechan
 ```text
 HAWT-Load_Control_and_UI
 │
-├── App/                     Application modules
-├── Core/                    Core firmware and system logic
-├── drivers/                 Peripheral and device drivers
-├── .ccsproject              CCS project configuration
-├── .cproject                Eclipse CDT project configuration
-├── .project                 Eclipse project metadata
-├── .gitignore               Git ignored files
-├── load_ui_control.syscfg   TI SysConfig configuration
-├── README.md                Repository documentation
-└── LICENSE                  Project license
+├── App/
+├── Core/
+├── drivers/
+├── images/
+├── .ccsproject
+├── .cproject
+├── load_ui_control.syscfg
+├── README.md
+└── LICENSE
 ```
 
 ---
 
 # Related Repositories
 
-| Repository               | Description                                         |
-| ------------------------ | --------------------------------------------------- |
+| Repository | Description |
+|------------|-------------|
 | HAWT-TurbineMCU-Firmware | Turbine monitoring and blade pitch control firmware |
-| HAWT-TurbineMCU-PCB      | PCB design for the Turbine MCU                      |
-| HAWT-LoadUI-PCB          | PCB design for the Load Control & UI MCU            |
+| HAWT-TurbineMCU-PCB | PCB design for the Turbine MCU |
+| HAWT-LoadUI-PCB | PCB design for the Load Control & UI MCU |
 
 ---
 
 # Authors
 
-* Hiram R. Rodríguez Hernández
-* José M. Burgos Guntín
-* Sergio A. Meléndez Padilla
-* Sergio A. Da Silva López
+- Hiram R. Rodríguez Hernández
+- José M. Burgos Guntín
+- Sergio A. Meléndez Padilla
+- Sergio A. Da Silva López
 
 Department of Electrical & Computer Engineering
 
