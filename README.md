@@ -87,7 +87,7 @@ Main responsibilities include:
 - Coordinating with the Turbine MCU
 
 <p align="center">
-  <img src="./images/system_architecture.png" alt="Firmware Architecture" width="900">
+  <img src="./images/system_architecture.png" alt="System Architecture" width="900">
 </p>
 
 <p align="center">
