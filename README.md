@@ -253,8 +253,8 @@ HAWT-Load_Control_and_UI
 | Repository | Description |
 |------------|-------------|
 | HAWT-TurbineMCU-Firmware | Turbine monitoring and blade pitch control firmware |
-| HAWT-TurbineMCU-PCB | PCB design for the Turbine MCU |
-| HAWT-LoadUI-PCB | PCB design for the Load Control & UI MCU |
+| Turbine_MCU | PCB design for the Turbine MCU |
+| Load-UI_MCU | PCB design for the Load Control & UI MCU |
 
 ---
 
